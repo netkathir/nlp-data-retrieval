@@ -309,6 +309,21 @@ summary = generator.generate_summary(results, query="electric vehicles")
 print(summary)
 ```
 
+### cache example:
+
+1. EMBEDDINGS:
+   Type: <class 'numpy.ndarray'>
+   Shape: (12, 3072)
+   Dimension: 3072 (vector length per vendor)
+   Total vendors: 12
+   Data type: float64
+   Sample embedding (first 5 values): [-0.02218404  0.01519422 -0.00113514 -0.02549797 -0.03320367]
+
+2. METADATA (Original Vendor Data):
+   Type: <class 'list'>
+   Count: 12 vendors
+   Keys in first vendor: ['id', 'transport_name', 'field_0', 'name', 'field_1', 'vendor_city', 'field_2', 'vendor_state', 'field_3', 'visiting_card', 'field_4', 'vehicle_type', 'field_5', 'main_service_city', 'field_6', 'owner_broker', 'field_7', 'whatsapp_number', 'field_8', 'alternate_number', 'field_9', 'main_service_state', 'field_10', 'return_service', 'field_11', 'any_association', 'field_12', 'association_name', 'field_13', 'verification', 'field_14', 'notes', 'field_15', 'text']
+
 ## 🎯 Customizing for Your Domain
 
 ### Example: Real Estate Listings
