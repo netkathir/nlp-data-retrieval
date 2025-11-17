@@ -110,6 +110,12 @@ warehouse-ai-tool/
 
 ## 🎯 How It Works
 
+### Embeddings pipeline
+- OpenAI converts processed database text into embeddings — numeric vectors that capture semantic meaning.
+- The project caches both the embedding vectors and the original records together (a dict with keys like "embeddings" and "metadata") in a .pkl file for fast local search.
+- A user query is converted into an embedding and compared (cosine similarity) against the cached vectors to find the best matches.
+- Note: embeddings are not reversible to exact original text; the API returns the stored original records (metadata) alongside similarity scores.
+
 ### 1. **Field Weighting System**
 High-priority fields appear multiple times in embeddings:
 
@@ -309,7 +315,7 @@ summary = generator.generate_summary(results, query="electric vehicles")
 print(summary)
 ```
 
-### cache example:
+### cache file example:
 
 1. EMBEDDINGS:
    Type: <class 'numpy.ndarray'>
@@ -502,16 +508,6 @@ python scripts/setup_mysql.py  # Edit script to point to your JSON
    - Check similarity scores are 40%+ for good matches
    - Tune SIMILARITY_THRESHOLD if needed
 
-## 📄 License
-
-MIT License - Free to use, modify, and sell!
-
-## 🤝 Support
-
-Questions? Check the docs:
-- QUICKSTART.md for setup
-- PRODUCTION_HANDOVER.md for architecture
-- config.py for all options
 
 ---
 
