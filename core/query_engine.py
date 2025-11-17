@@ -208,8 +208,16 @@ class SemanticSearch:
         if not self.initialized:
             self.initialize()
         
-        # Generate query embedding
-        query_embedding = self.embedding_generator.generate_embedding(query_text)
+        # AUGMENT query with filter values for better semantic matching
+        # This ensures filters contribute to both embedding similarity AND keyword boost
+        augmented_query = query_text
+        if filters:
+            filter_values = [str(v) for v in filters.values() if v]
+            if filter_values:
+                augmented_query = f"{query_text} {' '.join(filter_values)}"
+        
+        # Generate query embedding with augmented query
+        query_embedding = self.embedding_generator.generate_embedding(augmented_query)
         
         # Use threshold if provided
         if threshold is None:
@@ -230,8 +238,8 @@ class SemanticSearch:
             metadata = result[0]
             base_score = metadata.get('similarity_score', 0)
             
-            # Apply keyword matching boost first
-            keyword_boost = self._calculate_keyword_boost(query_text, metadata)
+            # Apply keyword matching boost using AUGMENTED query (includes filter values)
+            keyword_boost = self._calculate_keyword_boost(augmented_query, metadata)
             score_after_keywords = base_score + keyword_boost
             
             # Apply match percentage boost multiplier

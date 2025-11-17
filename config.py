@@ -308,6 +308,32 @@ FILTER_INDICES = {
     "vehicle_type": 5    # field_5 = vehicle_type
 }
 
+# Advanced Filters Configuration (for UI generation)
+# Each filter has: label, field_name, type (text, select, checkbox), and optional options
+ADVANCED_FILTERS = [
+    {
+        "id": "filterState",
+        "label": "State",
+        "field_name": "vendor_state",
+        "type": "text",
+        "placeholder": "e.g., Maharashtra"
+    },
+    {
+        "id": "filterCity",
+        "label": "City",
+        "field_name": "vendor_city",
+        "type": "text",
+        "placeholder": "e.g., Mumbai"
+    },
+    {
+        "id": "filterVerification",
+        "label": "Verification",
+        "field_name": "verification",
+        "type": "select",
+        "options": ["All", "Verified", "Unverified", "Pending"]
+    }
+]
+
 # Primary Display Index (used as card title)
 PRIMARY_DISPLAY_INDEX = 0  # field_0 = transport_name
 

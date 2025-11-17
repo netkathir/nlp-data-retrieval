@@ -90,6 +90,7 @@ Edit `config.py` to customize:
 - **MySQL Connection**: Update `MYSQL_CONFIG` with your credentials
 - **Field Mapping**: Customize `FIELD_MAP` for your field definitions
 - **Field Weights**: Adjust weights in FIELD_MAP (higher = more important for search)
+- **Advanced Filters**: Configure `ADVANCED_FILTERS` to customize UI filter fields (see below)
 - **AI Behavior**: Customize `AI_SUMMARY_CONFIG`, `AI_INSIGHTS_CONFIG`, `AI_QA_CONFIG`
 
 Add your OpenAI API key to `.env`:
@@ -117,11 +118,26 @@ Open your browser and visit the URL to access the web interface.
    - **Table View** - Compact tabular format
 
 3. **Adjust filters** (optional):
-   - State filter
-   - City filter
-   - Verification status
-   - Similarity threshold (minimum match quality)
-   - Max results count
+   - **Advanced Filters** (State, City, Verification, etc.) - Now fully configurable via `config.py`
+   - **Similarity threshold** - Minimum match quality (0-100%)
+   - **Max results count** - How many results to display
+
+**Note:** Advanced filters are configured in `config.py` using `ADVANCED_FILTERS`. You can add/remove/modify filters without touching HTML:
+
+```python
+ADVANCED_FILTERS = [
+    {
+        "id": "filterState",
+        "label": "State",
+        "field_name": "vendor_state",
+        "type": "text",  # or "select" or "checkbox"
+        "placeholder": "e.g., Maharashtra"
+    },
+    # Add more filters as needed
+]
+```
+
+Filter values **augment the search query** for better semantic matching. Searching "electronics" with state filter "Tamil Nadu" gives the same high scores as typing "electronics in Tamil Nadu"!
 
 4. **View results** - The page auto-scrolls to show matching vendors
 

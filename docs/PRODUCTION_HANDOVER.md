@@ -198,9 +198,58 @@ UI_CONFIG = {
 
 ---
 
-### 8. **Filter Field Mapping** (Lines 292-301) ⭐ CRITICAL
+### 8. **Advanced Filters Configuration** (Lines 302-338) ⭐ CRITICAL
 
-**Purpose:** Map UI filters to actual database columns
+**Purpose:** Configure which fields appear as UI filters and their input types
+
+```python
+ADVANCED_FILTERS = [
+    {
+        "id": "filterState",              # HTML element ID
+        "label": "State",                 # Display label in UI
+        "field_name": "vendor_state",     # Maps to FIELD_MAP name
+        "type": "text",                   # Input type: text, select, or checkbox
+        "placeholder": "e.g., Maharashtra"
+    },
+    {
+        "id": "filterCity",
+        "label": "City",
+        "field_name": "vendor_city",
+        "type": "text",
+        "placeholder": "e.g., Mumbai"
+    },
+    {
+        "id": "filterVerification",
+        "label": "Verification",
+        "field_name": "verification",
+        "type": "select",                 # Dropdown with options
+        "options": ["All", "Verified", "Unverified", "Pending"]
+    }
+]
+```
+
+**Filter Types Available:**
+- `"text"` - Text input field (for states, cities, names, etc.)
+- `"select"` - Dropdown menu (requires `options` array)
+- `"checkbox"` - Boolean yes/no toggle
+
+**How Filters Work:**
+1. Filter values **augment the search query** (e.g., "electronics" + state filter "Tamil Nadu" → "electronics Tamil Nadu")
+2. This ensures filters contribute to **both semantic similarity AND keyword boost**
+3. Exact matching is applied post-search to filter results
+4. **Result:** Using filters gives same high scores as typing the filter values in the query!
+
+**Client Action:** 
+- Add/remove filters as needed
+- Change field names to match their FIELD_MAP
+- Customize labels and placeholders for their domain
+- Choose appropriate input types (text/select/checkbox)
+
+---
+
+### 9. **Filter Field Mapping (Legacy)** (Lines 495-501) 
+
+**Note:** This is now superseded by `ADVANCED_FILTERS` above, but kept for backward compatibility.
 
 ```python
 FILTER_FIELD_NAMES = {
@@ -210,7 +259,7 @@ FILTER_FIELD_NAMES = {
 }
 ```
 
-**Client Action:** Update right-hand side with their actual column names
+**Client Action:** Update if using legacy filter code, otherwise use `ADVANCED_FILTERS`
 
 ---
 

@@ -50,12 +50,14 @@ def index():
         card_display_indices = config.CARD_DISPLAY_INDICES
         filter_indices = config.FILTER_INDICES
         primary_display_index = config.PRIMARY_DISPLAY_INDEX
+        advanced_filters = config.ADVANCED_FILTERS
     except AttributeError:
         # Fallback to legacy config if FIELD_MAP not available
         field_map = {}
         card_display_indices = []
         filter_indices = {}
         primary_display_index = 0
+        advanced_filters = []
     
     return render_template(
         'index.html',
@@ -68,7 +70,8 @@ def index():
         field_map=field_map,
         card_display_indices=card_display_indices,
         filter_indices=filter_indices,
-        primary_display_index=primary_display_index
+        primary_display_index=primary_display_index,
+        advanced_filters=advanced_filters
     )
 
 

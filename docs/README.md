@@ -267,7 +267,54 @@ AI_QA_CONFIG = {
 }
 ```
 
-### Step 4: Add Specialization Keywords
+### Step 4: Configure Advanced Filters
+
+The UI's advanced filters are now **fully configurable** via `config.py`. Define which fields appear as filters and their input types:
+
+```python
+ADVANCED_FILTERS = [
+    {
+        "id": "filterState",              # HTML element ID
+        "label": "State",                 # Display label
+        "field_name": "vendor_state",     # Maps to FIELD_MAP name
+        "type": "text",                   # Input type: text, select, or checkbox
+        "placeholder": "e.g., Maharashtra"
+    },
+    {
+        "id": "filterCity",
+        "label": "City",
+        "field_name": "vendor_city",
+        "type": "text",
+        "placeholder": "e.g., Mumbai"
+    },
+    {
+        "id": "filterVerification",
+        "label": "Verification",
+        "field_name": "verification",
+        "type": "select",                 # Dropdown select
+        "options": ["All", "Verified", "Unverified", "Pending"]
+    },
+    {
+        "id": "filterReturnService",
+        "label": "Return Service",
+        "field_name": "return_service",
+        "type": "checkbox"                # Boolean checkbox
+    }
+]
+```
+
+**Filter Types:**
+- `"text"` - Text input field (for states, cities, names, etc.)
+- `"select"` - Dropdown menu (provide `options` array)
+- `"checkbox"` - Boolean yes/no toggle
+
+**How Filters Work:**
+1. Filters augment the search query with their values (e.g., "electronics" + filter "Tamil Nadu" → "electronics Tamil Nadu")
+2. This ensures filter values contribute to **both semantic similarity AND keyword boost**
+3. Exact matching is applied post-search to filter results
+4. Result: Searching "electronics" with state filter "Tamil Nadu" gives same high scores as typing "electronics in Tamil Nadu"!
+
+### Step 5: Add Specialization Keywords
 
 ```python
 SPECIALIZATION_KEYWORDS = {
