@@ -187,6 +187,112 @@ class DataLoader:
                 
         finally:
             connection.close()
+
+    def load_from_postgresql(self) -> List[Dict[str, Any]]:
+        """
+        Load vendor data from PostgreSQL database
+        
+        Returns:
+            List of vendor dictionaries with all fields
+        """
+        try:
+            import psycopg2
+            from psycopg2.extras import RealDictCursor
+            from datetime import datetime
+        except ImportError:
+            raise ImportError("psycopg2 is required for PostgreSQL support. Install it with: pip install psycopg2-binary")
+        
+        from config import POSTGRESQL_CONFIG, POSTGRES_TABLE_NAME
+        
+        # Create PostgreSQL connection
+        try:
+            connection = psycopg2.connect(**POSTGRESQL_CONFIG, cursor_factory=RealDictCursor)
+        except psycopg2.Error as e:
+            raise ConnectionError(f"Failed to connect to PostgreSQL: {e}")
+        
+        try:
+            with connection.cursor() as cursor:
+                # Select all columns from the vendors table
+                query = f"SELECT * FROM {POSTGRES_TABLE_NAME}"
+                
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                
+                # Convert to list of dictionaries and process notes field
+                vendors = []
+                for row in rows:
+                    vendor = dict(row)
+                    
+                    # Process notes field - convert array of objects to searchable text with temporal context
+                    if 'notes' in vendor and vendor['notes']:
+                        notes_data = vendor['notes']
+                        
+                        # If notes is a list of objects with 'comment' and 'timestamp' fields
+                        if isinstance(notes_data, list):
+                            # Sort notes by timestamp (newest first) to prioritize recent comments
+                            sorted_notes = sorted(
+                                notes_data,
+                                key=lambda x: x.get('timestamp', ''),
+                                reverse=True
+                            )
+                            
+                            # Build searchable text with temporal indicators
+                            searchable_parts = []
+                            for idx, note in enumerate(sorted_notes):
+                                if isinstance(note, dict) and 'comment' in note:
+                                    comment = note['comment']
+                                    timestamp = note.get('timestamp', '')
+                                    
+                                    # Add temporal context for search
+                                    if idx == 0:
+                                        # Most recent comment - add emphasis
+                                        searchable_parts.append(f"RECENT: {comment}")
+                                    elif idx == len(sorted_notes) - 1:
+                                        # Oldest comment
+                                        searchable_parts.append(f"EARLIER: {comment}")
+                                    else:
+                                        # Middle comments
+                                        searchable_parts.append(comment)
+                                    
+                                    # Parse timestamp for additional context
+                                    try:
+                                        if timestamp:
+                                            dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                                            # Add year/month context for very old/new comments
+                                            date_str = dt.strftime('%Y-%m')
+                                            searchable_parts.append(f"[{date_str}]")
+                                    except:
+                                        pass
+                            
+                            # Store original notes array (for display)
+                            vendor['notes_raw'] = notes_data
+                            
+                            # Store combined searchable text (for embeddings)
+                            vendor['notes'] = ' | '.join(searchable_parts) if searchable_parts else ''
+                            
+                            # Store count for stats
+                            vendor['notes_count'] = len(sorted_notes)
+                        else:
+                            vendor['notes'] = str(notes_data) if notes_data else ''
+                            vendor['notes_raw'] = []
+                            vendor['notes_count'] = 0
+                    else:
+                        vendor['notes'] = ''
+                        vendor['notes_raw'] = []
+                        vendor['notes_count'] = 0
+                    
+                    # Convert datetime objects to strings for JSON serialization
+                    if 'created_at' in vendor and vendor['created_at']:
+                        vendor['created_at'] = vendor['created_at'].isoformat()
+                    if 'updated_at' in vendor and vendor['updated_at']:
+                        vendor['updated_at'] = vendor['updated_at'].isoformat()
+                    
+                    vendors.append(vendor)
+                
+                return vendors
+                
+        finally:
+            connection.close()
     
     def load_from_dataframe(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
         """
@@ -247,7 +353,12 @@ class DataLoader:
             List of vendor dictionaries
         """
         # Load based on DATA_TYPE config
-        if self.data_type == 'mysql':
+        if self.data_type == 'postgresql':
+            data = self.load_from_postgresql()
+            # PostgreSQL data is pre-validated with field mapping, skip legacy validation
+            print(f"✓ Loaded {len(data)} vendors from PostgreSQL source")
+            return data
+        elif self.data_type == 'mysql':
             data = self.load_from_mysql()
             # MySQL data is pre-validated with field mapping, skip legacy validation
             print(f"✓ Loaded {len(data)} vendors from MySQL source")

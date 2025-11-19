@@ -29,32 +29,43 @@ MAX_RESULTS = 5  # Maximum number of results - CHANGE THIS to limit total result
 # Data Configuration
 # ==================
 # CHANGE THIS to switch between different data sources
-# Supported formats: JSON, CSV, Excel (.xlsx), MySQL Database
+# Supported formats: JSON, CSV, Excel (.xlsx), PostgreSQL Database, MySQL Database
 
-# Option 1: MySQL Database (Default - Pure Field Index Architecture)
-DATA_TYPE = "mysql"
-MYSQL_CONFIG = {
-    "host": os.getenv("MYSQL_HOST", "localhost"),
-    "user": os.getenv("MYSQL_USER", "root"),
-    "password": os.getenv("MYSQL_PASSWORD", "root"),
-    "database": os.getenv("MYSQL_DATABASE", "warehouse_ai_db"),
-    "charset": "utf8mb4"
+# Option 1: PostgreSQL Database (Default - Cloud-hosted on Render)
+DATA_TYPE = "postgresql"
+POSTGRESQL_CONFIG = {
+    "host": os.getenv("POSTGRES_HOST"),
+    "port": int(os.getenv("POSTGRES_PORT", "5432")),
+    "user": os.getenv("POSTGRES_USER"),
+    "password": os.getenv("POSTGRES_PASSWORD"),
+    "database": os.getenv("POSTGRES_DATABASE"),
 }
-MYSQL_TABLE_NAME = "vendors"
+POSTGRES_TABLE_NAME = "vendors"
 
-# Option 2: JSON File (Uncomment to use)
+# Option 2: MySQL Database (Uncomment to use)
+# DATA_TYPE = "mysql"
+# MYSQL_CONFIG = {
+#     "host": os.getenv("MYSQL_HOST", "localhost"),
+#     "user": os.getenv("MYSQL_USER", "root"),
+#     "password": os.getenv("MYSQL_PASSWORD", "root"),
+#     "database": os.getenv("MYSQL_DATABASE", "warehouse_ai_db"),
+#     "charset": "utf8mb4"
+# }
+# MYSQL_TABLE_NAME = "vendors"
+
+# Option 3: JSON File (Uncomment to use)
 # DATA_TYPE = "json"
 # DATA_PATH = os.getenv("DATA_PATH", "data/vendors.json")
 
-# Option 3: CSV File (Uncomment to use)
+# Option 4: CSV File (Uncomment to use)
 # DATA_TYPE = "csv"
 # DATA_PATH = "data/vendors.csv"
 
-# Option 4: Excel File (Uncomment to use)
+# Option 5: Excel File (Uncomment to use)
 # DATA_TYPE = "excel"
 # DATA_PATH = "data/vendors.xlsx"
 
-EMBEDDINGS_CACHE_PATH = os.getenv("EMBEDDINGS_CACHE_PATH", "data/embeddings/cache_mysql.pkl")
+EMBEDDINGS_CACHE_PATH = os.getenv("EMBEDDINGS_CACHE_PATH", "data/embeddings/cache_postgresql.pkl")
 
 # Flask API Configuration
 API_HOST = os.getenv("API_HOST", "0.0.0.0")  # 0.0.0.0 allows external connections, 127.0.0.1 for local only
@@ -85,6 +96,10 @@ Each field index maps to:
 TOTAL_FIELDS = 16
 
 # Define which field indices are active (exist in database)
+# ACTIVE_FIELD_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+# Active field indices (0-based) - these map to field_0, field_1, etc. in the database
+# Only these fields will be loaded from the database
+# ACTIVE_FIELD_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 ACTIVE_FIELD_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
 # ====================
@@ -107,7 +122,7 @@ FIELD_MAP = {
         "display_in_table": True,
         "display_in_brief": True,
         "filterable": False,
-        "icon": "🚚"
+        "icon": "truck.svg"
     },
     1: {
         "name": "name",
@@ -119,7 +134,7 @@ FIELD_MAP = {
         "display_in_table": True,
         "display_in_brief": False,
         "filterable": False,
-        "icon": "👤"
+        "icon": "user.svg"
     },
     2: {
         "name": "vendor_city",
@@ -131,7 +146,7 @@ FIELD_MAP = {
         "display_in_table": True,
         "display_in_brief": True,
         "filterable": True,
-        "icon": "📍"
+        "icon": "map-pin.svg"
     },
     3: {
         "name": "vendor_state",
@@ -143,7 +158,7 @@ FIELD_MAP = {
         "display_in_table": True,
         "display_in_brief": True,
         "filterable": True,
-        "icon": "🗺️"
+        "icon": "map.svg"
     },
     4: {
         "name": "visiting_card",
@@ -155,7 +170,7 @@ FIELD_MAP = {
         "display_in_table": False,
         "display_in_brief": False,
         "filterable": False,
-        "icon": "💼"
+        "icon": "briefcase.svg"
     },
     5: {
         "name": "vehicle_type",
@@ -167,7 +182,7 @@ FIELD_MAP = {
         "display_in_table": True,
         "display_in_brief": True,
         "filterable": True,
-        "icon": "🚛"
+        "icon": "truck.svg"
     },
     6: {
         "name": "main_service_city",
@@ -179,7 +194,7 @@ FIELD_MAP = {
         "display_in_table": False,
         "display_in_brief": False,
         "filterable": False,
-        "icon": "🌐"
+        "icon": "globe.svg"
     },
     7: {
         "name": "owner_broker",
@@ -191,7 +206,7 @@ FIELD_MAP = {
         "display_in_table": True,
         "display_in_brief": True,
         "filterable": True,
-        "icon": "🏢"
+        "icon": "building.svg"
     },
     8: {
         "name": "whatsapp_number",
@@ -203,7 +218,7 @@ FIELD_MAP = {
         "display_in_table": False,
         "display_in_brief": False,
         "filterable": False,
-        "icon": "📱"
+        "icon": "smartphone.svg"
     },
     9: {
         "name": "alternate_number",
@@ -215,7 +230,7 @@ FIELD_MAP = {
         "display_in_table": False,
         "display_in_brief": False,
         "filterable": False,
-        "icon": "☎️"
+        "icon": "smartphone.svg"
     },
     10: {
         "name": "main_service_state",
@@ -227,7 +242,7 @@ FIELD_MAP = {
         "display_in_table": False,
         "display_in_brief": False,
         "filterable": False,
-        "icon": "🗺️"
+        "icon": "map.svg"
     },
     11: {
         "name": "return_service",
@@ -239,7 +254,7 @@ FIELD_MAP = {
         "display_in_table": False,
         "display_in_brief": False,
         "filterable": False,
-        "icon": "🔄"
+        "icon": "repeat.svg"
     },
     12: {
         "name": "any_association",
@@ -251,7 +266,7 @@ FIELD_MAP = {
         "display_in_table": False,
         "display_in_brief": False,
         "filterable": False,
-        "icon": "🤝"
+        "icon": "users.svg"
     },
     13: {
         "name": "association_name",
@@ -263,7 +278,7 @@ FIELD_MAP = {
         "display_in_table": False,
         "display_in_brief": False,
         "filterable": False,
-        "icon": "🤝"
+        "icon": "users.svg"
     },
     14: {
         "name": "verification",
@@ -275,11 +290,11 @@ FIELD_MAP = {
         "display_in_table": True,
         "display_in_brief": False,
         "filterable": True,
-        "icon": "✓"
+        "icon": "check-square.svg"
     },
     15: {
         "name": "notes",
-        "label": "Additional Details",
+        "label": "Notes & Comments",
         "type": "text",
         "searchable": True,
         "weight": SEMANTIC_WEIGHT,
@@ -287,7 +302,7 @@ FIELD_MAP = {
         "display_in_table": False,
         "display_in_brief": False,
         "filterable": False,
-        "icon": "📝"
+        "icon": "file-text.svg"
     }
 }
 
@@ -360,7 +375,7 @@ VENDOR_FIELDS = [
     "any_association",
     "association_name",
     "verification",
-    "notes"
+    # "notes"
 ]
 
 # Field descriptions for better context
@@ -464,6 +479,10 @@ UI_CONFIG = {
     "main_heading": "AI Vendor Search",
     "subtitle": "Find the perfect transport vendor using AI-powered semantic search",
     
+    # Entity Name (describes what records represent in this database)
+    "entity_name": "vendors",
+    "entity_name_singular": "vendor",
+    
     # Search Interface
     "search_placeholder": "Ask in natural language: e.g., Find electronics vendors in Mumbai...",
     "search_button": "Search",
@@ -478,6 +497,7 @@ UI_CONFIG = {
     # Statistics Labels
     "stat_total": "Total Vendors",
     "stat_verified": "Verified",
+    "stat_with_associations": "With Associations",
     
     # Filter Labels
     "filter_state_label": "State",
@@ -502,7 +522,7 @@ UI_CONFIG = {
         "association_name": "Association Name",
         "whatsapp_number": "WhatsApp",
         "alternate_number": "Alternate",
-        "notes": "Notes"
+        # "notes": "Notes"
     },
     
     # Summary Section
@@ -514,7 +534,24 @@ UI_CONFIG = {
     "city_all": "All Cities",
     "verification_all": "All",
     "verification_verified": "Verified Only",
-    "verification_unverified": "Unverified Only"
+    "verification_unverified": "Unverified Only",
+    
+    # SVG Icon Paths (relative to /static/icons/)
+    "icons": {
+        "main_logo": "warehouse.svg",
+        "search": "search.svg",
+        "microphone": "microphone.svg",
+        "pause": "pause.svg",
+        "refresh": "refresh.svg",
+        "lightbulb": "lightbulb.svg",
+        "filter": "filter.svg",
+        "chevron_down": "chevron-down.svg",
+        "alert_circle": "alert-circle.svg",
+        "check_circle": "check-circle.svg",
+        "search_x": "search-x.svg",
+        "alert_triangle": "alert-triangle.svg",
+        "recording_dot": "recording-dot.svg"
+    }
 }
 
 # Primary display field (shown as card title)
@@ -564,8 +601,9 @@ Please provide a concise, helpful summary of these results. Your response should
 Keep the summary conversational and under 150 words.""",
     
     # Fields to include in vendor summaries for GPT (uses field indices)
-    "summary_field_indices": [0, 1, 2, 3, 4, 5, 7, 8, 9, 13, 14, 15],  # Transport name, contact name, location, phones (WhatsApp & alternate), vehicle, verification, notes
-    
+    # "summary_field_indices": [0, 1, 2, 3, 4, 5, 7, 8, 9, 13, 14, 15],  # Transport name, contact name, location, phones (WhatsApp & alternate), vehicle, verification, notes
+    "summary_field_indices": [0, 1, 2, 3, 4, 5, 7, 8, 9, 13, 14],  # Transport name, contact name, location, phones (WhatsApp & alternate), vehicle, verification, notes
+
     # Fallback message when no results found
     "no_results_message": "No vendors were found matching your query. Try broadening your search criteria or adjusting filters.",
     
@@ -643,8 +681,10 @@ Available vendor information:
 Please answer the question based on the vendor data provided. Identify which vendors in the list are the BEST matches for the query and explain why they are most relevant. Be specific and helpful.""",
     
     # Field indices to include when answering questions
-    "qa_field_indices": [0, 1, 2, 3, 5, 6, 7, 11, 14, 15],  # Key fields for context
-    
+    # "qa_field_indices": [0, 1, 2, 3, 5, 6, 7, 11, 14, 15],  # Key fields for context
+    "qa_field_indices": [0, 1, 2, 3, 5, 6, 7, 11, 14],  # Key fields for context
+
+
     # Fallback message
     "no_results_message": "I couldn't find any relevant vendors to answer your question.",
     "error_message": "Unable to answer the question at this time."

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 - Python 3.8 or higher
-- MySQL Server 5.7+ or 8.0+
+- PostgreSQL database (local or cloud-hosted)
 - OpenAI API key
 
 ## Setup (4 steps)
@@ -12,23 +12,22 @@
 pip install -r requirements.txt
 ```
 
-### 2. Setup MySQL Database
+### 2. Setup PostgreSQL Database
 
-**Option A: Using MySQL Command Line**
+**Option A: Using PostgreSQL Command Line**
 ```bash
-# Start MySQL server (if not running)
-mysql.server start   # On macOS
-# or: sudo service mysql start   # On Linux
+# Connect to PostgreSQL
+psql -U postgres
 
-# Connect to MySQL
-mysql -u root -p
+# Create database
+CREATE DATABASE transport_vendor_db;
 
-# Create database and table
-CREATE DATABASE warehouse_ai_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE warehouse_ai_db;
+# Connect to the database
+\c transport_vendor_db
 
+# Create table
 CREATE TABLE vendors (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     field_0 VARCHAR(500),
     field_1 VARCHAR(500),
     field_2 VARCHAR(500),
@@ -46,57 +45,45 @@ CREATE TABLE vendors (
     field_14 VARCHAR(500),
     field_15 TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
 
-# Exit MySQL
-EXIT;
+# Exit PostgreSQL
+\q
 ```
 
 **Option B: Import Sample Data (Recommended)**
 ```bash
-# First create database and table as shown above, then:
-# Use Python to import from data/vendors.json
-python -c "
-import json
-import pymysql
-from config import MYSQL_CONFIG
-
-# Load sample data
-with open('data/vendors.json', 'r') as f:
-    vendors = json.load(f)
-
-# Connect and insert
-conn = pymysql.connect(**MYSQL_CONFIG)
-cursor = conn.cursor()
-
-for vendor in vendors:
-    fields = [vendor.get(f'field_{i}', '') for i in range(16)]
-    cursor.execute('''
-        INSERT INTO vendors (field_0, field_1, field_2, field_3, field_4, field_5,
-                           field_6, field_7, field_8, field_9, field_10, field_11,
-                           field_12, field_13, field_14, field_15)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    ''', fields)
-
-conn.commit()
-cursor.close()
-conn.close()
-print('Data imported successfully!')
-"
+# Import 60 sample vendors from JSON
+python scripts/import_vendors.py
 ```
+
+This will create the table and import 60 diverse vendor records from `data/vendors.json`.
+
+**Option C: Cloud-Hosted PostgreSQL**
+If using a cloud provider (Render, AWS RDS, etc.), get your connection details and configure the environment variables in step 3.
 
 ### 3. Configure Settings
+
+Add your credentials to `.env`:
+```bash
+# OpenAI API Key
+OPENAI_API_KEY=sk-your-actual-key-here
+
+# PostgreSQL Database Connection
+POSTGRES_HOST=your-postgres-host.com
+POSTGRES_PORT=5432
+POSTGRES_USER=your_username
+POSTGRES_PASSWORD=your_password
+POSTGRES_DATABASE=transport_vendor_db
+```
+
 Edit `config.py` to customize:
-- **MySQL Connection**: Update `MYSQL_CONFIG` with your credentials
 - **Field Mapping**: Customize `FIELD_MAP` for your field definitions
+- **Field Icons**: Update icon filenames in FIELD_MAP (SVG files in `/static/icons/`)
 - **Field Weights**: Adjust weights in FIELD_MAP (higher = more important for search)
+- **UI Text**: Customize `UI_CONFIG` for page titles, entity names, and labels
 - **Advanced Filters**: Configure `ADVANCED_FILTERS` to customize UI filter fields (see below)
 - **AI Behavior**: Customize `AI_SUMMARY_CONFIG`, `AI_INSIGHTS_CONFIG`, `AI_QA_CONFIG`
-
-Add your OpenAI API key to `.env`:
-```
-OPENAI_API_KEY=sk-your-actual-key-here
-```
 
 ### 4. Run the Application
 ```bash
@@ -169,6 +156,7 @@ FIELD_MAP = {
     0: {
         "name": "transport_name",     # Logical name for code
         "label": "Transport Company",  # Display label for UI
+        "icon": "truck.svg",          # SVG icon file in /static/icons/
         "type": "text",
         "searchable": True,
         "weight": 3,                  # Embedding weight (1-15)
@@ -178,6 +166,8 @@ FIELD_MAP = {
     # ... fields 2-15
 }
 ```
+
+**Note**: Icons are now SVG files stored in `/static/icons/`. Change any icon by editing the SVG file or updating the "icon" field in FIELD_MAP.
 
 ### Active Fields
 ```python
@@ -233,7 +223,7 @@ for vendor in results:
 2. **Adjust weights** based on field importance for your use case
 3. **Configure AI prompts** in AI_SUMMARY_CONFIG, AI_INSIGHTS_CONFIG, AI_QA_CONFIG
 4. **Update SPECIALIZATION_KEYWORDS** with your domain-specific keywords
-5. **Run** `python scripts/setup_mysql.py` to import your data
+5. **Run** `python scripts/import_vendors.py` to import your data
 
 The system is **100% configurable** via `config.py` - no code changes needed!
 
@@ -241,11 +231,11 @@ The system is **100% configurable** via `config.py` - no code changes needed!
 
 **"Import errors"**: Install packages: `pip install -r requirements.txt`
 
-**"MySQL connection error"**: Check MYSQL_CONFIG in config.py, ensure MySQL is running
+**"PostgreSQL connection error"**: Check .env file for correct credentials, ensure PostgreSQL is accessible
 
 **"No API key"**: Add OPENAI_API_KEY to .env file
 
-**"Slow first run"**: Normal - building embeddings (cached in data/embeddings/cache_mysql.pkl)
+**"Slow first run"**: Normal - building embeddings (cached in data/embeddings/cache_postgresql.pkl)
 
 **"Low similarity scores"**: Check field weights and KEYWORD_REPETITION_COUNT in config.py
 

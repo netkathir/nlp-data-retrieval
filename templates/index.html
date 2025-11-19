@@ -11,18 +11,10 @@
     <div class="container">
         <header>
             <h1>
-                <svg class="icon-large" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M19.5 8.25L12 2L4.5 8.25V19.5C4.5 19.8978 4.65804 20.2794 4.93934 20.5607C5.22064 20.842 5.60218 21 6 21H18C18.3978 21 18.7794 20.842 19.0607 20.5607C19.342 20.2794 19.5 19.8978 19.5 19.5V8.25Z" stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <defs>
-                        <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                </svg>
-                AI Vendor Search
+                <img src="{{ url_for('static', filename='icons/' + ui.icons.main_logo) }}" class="icon-large" alt="Logo">
+                {{ ui.main_heading }}
             </h1>
-            <p class="subtitle">Find the perfect transport vendor using AI-powered semantic search</p>
+            <p class="subtitle">{{ ui.subtitle }}</p>
         </header>
 
         <!-- Statistics -->
@@ -38,16 +30,11 @@
                     onkeypress="handleEnter(event)"
                 >
                 <button onclick="search()" id="searchBtn">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M21 21L16.65 16.65M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Search
+                    <img src="{{ url_for('static', filename='icons/' + ui.icons.search) }}" class="icon" alt="Search">
+                    {{ ui.search_button }}
                 </button>
                 <button onclick="startVoiceRecording()" id="voiceBtn">
-                    <svg class="icon" id="micIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 1C10.34 1 9 2.34 9 4V12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12V4C15 2.34 13.66 1 12 1Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M19 10V12C19 15.866 15.866 19 12 19C8.13401 19 5 15.866 5 12V10M12 19V23M8 23H16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                    <img src="{{ url_for('static', filename='icons/' + ui.icons.microphone) }}" class="icon" id="micIcon" alt="Voice">
                     Voice
                 </button>
             </div>
@@ -55,16 +42,12 @@
             <!-- Utility Buttons -->
             <div class="utility-buttons">
                 <button onclick="showRefreshConfirmation()" class="utility-btn refresh-btn" title="Refresh embeddings cache">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 4V10H7M23 20V14H17M20.49 9C19.9828 7.56678 19.1209 6.28541 17.9845 5.27542C16.8482 4.26543 15.4745 3.55976 13.9917 3.22426C12.5089 2.88875 10.9652 2.93434 9.50481 3.35677C8.04437 3.77921 6.71475 4.56471 5.64 5.64L1 10M23 14L18.36 18.36C17.2853 19.4353 15.9556 20.2208 14.4952 20.6432C13.0348 21.0657 11.4911 21.1112 10.0083 20.7757C8.52547 20.4402 7.1518 19.7346 6.01547 18.7246C4.87913 17.7146 4.01717 16.4332 3.51 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                    <img src="{{ url_for('static', filename='icons/' + ui.icons.refresh) }}" class="icon" alt="Refresh">
                     Refresh Embeddings
                 </button>
                 <button onclick="generateAISummary()" id="aiSummaryBtn" class="utility-btn ai-summary-btn" style="display: none;" title="Generate AI summary of results">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 19C9 19.5304 9.21071 20.0391 9.58579 20.4142C9.96086 20.7893 10.4696 21 11 21H13C13.5304 21 14.0391 20.7893 14.4142 20.4142C14.7893 20.0391 15 19.5304 15 19M12 3C10.8181 3 9.64778 3.23279 8.55585 3.68508C7.46392 4.13738 6.47177 4.80031 5.63604 5.63604C3.94821 7.32387 3 9.61305 3 12C3 15.0902 4.71 17.206 6.34 18.6C7.01 19.148 7.5 19.5 7.5 19.5C7.5 19.5 8 20 8 21H16C16 20 16.5 19.5 16.5 19.5C16.5 19.5 16.99 19.148 17.66 18.6C19.29 17.206 21 15.0902 21 12C21 9.61305 20.0518 7.32387 18.364 5.63604C16.6761 3.94821 14.3869 3 12 3Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Generate AI Summary
+                    <img src="{{ url_for('static', filename='icons/' + ui.icons.lightbulb) }}" class="icon" alt="AI Summary">
+                    {{ ui.generate_summary_button }}
                 </button>
             </div>
 
@@ -74,9 +57,7 @@
                 <div class="select-wrapper">
                     <div class="select-button" onclick="toggleDropdown('responseFormat')">
                         <span id="responseFormatText">AI Summary</span>
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+                        <img src="{{ url_for('static', filename='icons/' + ui.icons.chevron_down) }}" class="icon" alt="Dropdown">
                     </div>
                     <div class="select-dropdown" id="responseFormatDropdown">
                         <div class="select-option" onclick="selectOption('responseFormat', 'cards', 'Detailed Cards')">Detailed Cards</div>
@@ -90,9 +71,7 @@
             <!-- Advanced Filters -->
             <details>
                 <summary>
-                    <svg class="icon" style="display: inline-block; margin-right: 8px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                    <img src="{{ url_for('static', filename='icons/' + ui.icons.filter) }}" class="icon" style="display: inline-block; margin-right: 8px;" alt="Filter">
                     Advanced Filters
                 </summary>
                 <div class="filters">
@@ -106,9 +85,7 @@
                         {% elif filter.type == 'select' %}
                         <div class="select-button" onclick="toggleDropdown('{{ filter.id }}')">
                             <span id="{{ filter.id }}Text">{{ filter.options[0] if filter.options else 'Select...' }}</span>
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
+                            <img src="{{ url_for('static', filename='icons/' + ui.icons.chevron_down) }}" class="icon" alt="Dropdown">
                         </div>
                         <div class="select-dropdown" id="{{ filter.id }}Dropdown">
                             {% for option in filter.options %}
@@ -148,9 +125,7 @@
             <!-- Audio Visualizer -->
             <div id="audioVisualizer"></div>
             <div class="recording-indicator" id="recordingIndicator">
-                <svg class="icon" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="10"/>
-                </svg>
+                <img src="{{ url_for('static', filename='icons/' + ui.icons.recording_dot) }}" class="icon" alt="Recording">
                 Recording... Speak now!
             </div>
         </div>
@@ -163,9 +138,7 @@
     <div class="modal-overlay" id="refreshModal">
         <div class="modal-content">
             <div class="modal-header">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#f5576c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <img src="{{ url_for('static', filename='icons/' + ui.icons.alert_circle) }}" alt="Alert">
                 <h3>Refresh Embeddings?</h3>
             </div>
             <div class="modal-body">
@@ -194,6 +167,16 @@
         const PRIMARY_FIELD = '{{ primary_field }}';
         const CITY_FIELD = '{{ filter_fields.city }}';
         const STATE_FIELD = '{{ filter_fields.state }}';
+        
+        // Field configuration from config.py
+        const FIELD_MAP = {{ field_map | tojson }};
+        const CARD_DISPLAY_INDICES = {{ card_display_indices | tojson }};
+        const PRIMARY_DISPLAY_INDEX = {{ primary_display_index }};
+        
+        // UI text configuration
+        const UI_TEXT = {{ ui | tojson }};
+        const ENTITY_NAME = UI_TEXT.entity_name || 'records';
+        const ENTITY_NAME_SINGULAR = UI_TEXT.entity_name_singular || 'record';
 
         // Helper function for smooth auto-scroll to element
         function scrollToElement(elementId) {
@@ -785,90 +768,90 @@
         }
 
         // Display functions for different formats
+        
+        // Helper function to build a single vendor card dynamically from FIELD_MAP
+        function buildVendorCard(vendor, index, score) {
+            const scoreClass = score >= 0.5 ? 'score-excellent' : score >= 0.3 ? 'score-good' : 'score-fair';
+            
+            // Format notes for better readability
+            let formattedNotes = '';
+            if (vendor.notes_raw && vendor.notes_raw.length > 0) {
+                formattedNotes = vendor.notes_raw.map((note, idx) => {
+                    const date = new Date(note.timestamp).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+                    const marker = idx === 0 ? '🔵 Latest' : idx === vendor.notes_raw.length - 1 ? '⚪ Oldest' : '⚪';
+                    return `<div style="margin-bottom: 8px;"><strong>${marker}</strong> <span style="color: #666; font-size: 0.85em;">[${date}]</span><br/>${note.comment}</div>`;
+                }).join('');
+            } else if (vendor.notes) {
+                formattedNotes = vendor.notes;
+            }
+            
+            // Build details dynamically from FIELD_MAP configuration
+            let detailsHTML = '';
+            
+            // Iterate through CARD_DISPLAY_INDICES to get fields to display
+            CARD_DISPLAY_INDICES.forEach(fieldIndex => {
+                const fieldConfig = FIELD_MAP[fieldIndex];
+                if (!fieldConfig) return;
+                
+                const fieldName = fieldConfig.name;
+                const label = fieldConfig.label;
+                const iconFile = fieldConfig.icon || 'file-text.svg';  // Get icon filename from config
+                const iconPath = `/static/icons/${iconFile}`;  // Build full path
+                let value = vendor[fieldName];
+                
+                // Special formatting for specific fields
+                if (fieldName === 'vendor_city' && vendor.vendor_state) {
+                    value = `${vendor.vendor_city || 'N/A'}, ${vendor.vendor_state || 'N/A'}`;
+                } else if (fieldName === 'return_service') {
+                    value = value === 'Y' ? 'Yes' : 'No';
+                } else if (fieldName === 'notes') {
+                    // Skip notes here, handled separately below
+                    return;
+                }
+                
+                if (value && value !== 'N/A' && value !== '') {
+                    detailsHTML += `
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <img src="${iconPath}" class="icon" style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;" alt="">
+                                ${label}
+                            </div>
+                            <div class="detail-value">${value}</div>
+                        </div>`;
+                }
+            });
+            
+            // Get primary field for card title
+            const primaryFieldConfig = FIELD_MAP[PRIMARY_DISPLAY_INDEX];
+            const primaryFieldName = primaryFieldConfig ? primaryFieldConfig.name : PRIMARY_FIELD;
+            const primaryIconFile = primaryFieldConfig ? primaryFieldConfig.icon : 'building.svg';
+            const primaryIconPath = `/static/icons/${primaryIconFile}`;
+            const cardTitle = vendor[primaryFieldName] || 'N/A';
+            
+            return `
+                <div class="vendor-card">
+                    <div class="vendor-header">
+                        <div>
+                            <span class="rank">#${index + 1}</span>
+                            <span class="vendor-title">
+                                <img src="${primaryIconPath}" class="icon" style="width: 20px; height: 20px; margin-right: 8px; vertical-align: middle;" alt="">
+                                ${cardTitle}
+                            </span>
+                        </div>
+                        <span class="score-badge ${scoreClass}">${(score * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="vendor-details">
+                        ${detailsHTML}
+                    </div>
+                    ${formattedNotes ? `<div class="notes" style="line-height: 1.6;">${formattedNotes}</div>` : ''}
+                </div>
+            `;
+        }
+        
         function displayDetailedCards(results) {
             const resultsDiv = document.getElementById('results');
             const resultsHTML = results.map((vendor, index) => {
-                const score = vendor.similarity_score;
-                const scoreClass = score >= 0.5 ? 'score-excellent' : score >= 0.3 ? 'score-good' : 'score-fair';
-                
-                return `
-                    <div class="vendor-card">
-                        <div class="vendor-header">
-                            <div>
-                                <span class="rank">#${index + 1}</span>
-                                <span class="vendor-title">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M9 17H7V11H5L12 5L19 11H17V17H15M13 17V13H11V17H13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    ${vendor[PRIMARY_FIELD] || 'N/A'}
-                                </span>
-                            </div>
-                            <span class="score-badge ${scoreClass}">${(score * 100).toFixed(1)}%</span>
-                        </div>
-                        <div class="vendor-details">
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    Contact
-                                </div>
-                                <div class="detail-value">${vendor.name || 'N/A'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12 21C15.5 17.4 19 14.1764 19 10.2C19 6.22355 15.866 3 12 3C8.13401 3 5 6.22355 5 10.2C5 14.1764 8.5 17.4 12 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M12 12C13.1046 12 14 11.1046 14 10C14 8.89543 13.1046 8 12 8C10.8954 8 10 8.89543 10 10C10 11.1046 10.8954 12 12 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    Location
-                                </div>
-                                <div class="detail-value">${vendor[CITY_FIELD] || 'N/A'}, ${vendor[STATE_FIELD] || 'N/A'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M9 17H7V11H5L12 5L19 11H17V17H15M13 17V13H11V17H13Z" stroke="currentColor" stroke-width="2"/>
-                                    </svg>
-                                    Vehicle
-                                </div>
-                                <div class="detail-value">${vendor.vehicle_type || 'N/A'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    Verification
-                                </div>
-                                <div class="detail-value">${vendor.verification || 'N/A'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M4 4H20C20.5523 4 21 4.44772 21 5V19C21 19.5523 20.5523 20 20 20H4C3.44772 20 3 19.5523 3 19V5C3 4.44772 3.44772 4 4 4Z" stroke="currentColor" stroke-width="2"/>
-                                        <path d="M3 10H21M8 14H10M16 14V17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                    </svg>
-                                    Return Service
-                                </div>
-                                <div class="detail-value">${vendor.return_service === 'Y' ? 'Yes' : 'No'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M3 5C3 3.89543 3.89543 3 5 3H9C10.1046 3 11 3.89543 11 5V9C11 10.1046 10.1046 11 9 11H5C3.89543 11 3 10.1046 3 9V5Z" stroke="currentColor" stroke-width="2"/>
-                                        <path d="M13 5C13 3.89543 13.8954 3 15 3H19C20.1046 3 21 3.89543 21 5V9C21 10.1046 20.1046 11 19 11H15C13.8954 11 13 10.1046 13 9V5Z" stroke="currentColor" stroke-width="2"/>
-                                        <path d="M3 15C3 13.8954 3.89543 13 5 13H9C10.1046 13 11 13.8954 11 15V19C11 20.1046 10.1046 21 9 21H5C3.89543 21 3 20.1046 3 19V15Z" stroke="currentColor" stroke-width="2"/>
-                                        <path d="M13 15C13 13.8954 13.8954 13 15 13H19C20.1046 13 21 13.8954 21 15V19C21 20.1046 20.1046 21 19 21H15C13.8954 21 13 20.1046 13 19V15Z" stroke="currentColor" stroke-width="2"/>
-                                    </svg>
-                                    WhatsApp
-                                </div>
-                                <div class="detail-value">${vendor.whatsapp_number || 'N/A'}</div>
-                            </div>
-                        </div>
-                        ${vendor.notes ? `<div class="notes">${vendor.notes}</div>` : ''}
-                    </div>
-                `;
+                return buildVendorCard(vendor, index, vendor.similarity_score);
             }).join('');
             resultsDiv.innerHTML = resultsHTML;
         }
@@ -919,7 +902,7 @@
         async function displayAISummary(results, query) {
             const resultsDiv = document.getElementById('results');
             
-            // First, render the detailed cards immediately
+            // Build AI summary container with loading spinner
             let htmlContent = `
                 <div class="ai-summary" id="aiSummaryBox" style="padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px; line-height: 1.8; box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3); margin-bottom: 30px;">
                     <h2 style="margin: 0 0 20px 0; display: flex; align-items: center; gap: 12px;">
@@ -939,107 +922,9 @@
                     <h3 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px;">Detailed Results</h3>
             `;
 
-            // Add detailed cards immediately
+            // Use shared buildVendorCard function for detailed cards
             results.forEach((vendor, index) => {
-                const score = vendor.similarity_score;
-                const scoreClass = score >= 0.5 ? 'score-excellent' : score >= 0.3 ? 'score-good' : 'score-fair';
-                
-                htmlContent += `
-                    <div class="vendor-card" style="margin-bottom: 15px;">
-                        <div class="vendor-header">
-                            <div>
-                                <span class="rank">#${index + 1}</span>
-                                <span class="vendor-title">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M9 17H7V11H5L12 5L19 11H17V17H15M13 17V13H11V17H13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    ${vendor[PRIMARY_FIELD] || 'N/A'}
-                                </span>
-                            </div>
-                            <span class="score-badge ${scoreClass}">${(score * 100).toFixed(1)}%</span>
-                        </div>
-                        <div class="vendor-details">
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    Contact
-                                </div>
-                                <div class="detail-value">${vendor.name || 'N/A'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12 21C15.5 17.4 19 14.1764 19 10.2C19 6.22355 15.866 3 12 3C8.13401 3 5 6.22355 5 10.2C5 14.1764 8.5 17.4 12 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M12 12C13.1046 12 14 11.1046 14 10C14 8.89543 13.1046 8 12 8C10.8954 8 10 8.89543 10 10C10 11.1046 10.8954 12 12 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    Location
-                                </div>
-                                <div class="detail-value">${vendor[CITY_FIELD] || 'N/A'}, ${vendor[STATE_FIELD] || 'N/A'}</div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="detail-label">
-                                        <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M9 17H7V11H5L12 5L19 11H17V17H15M13 17V13H11V17H13Z" stroke="currentColor" stroke-width="2"/>
-                                        </svg>
-                                        Vehicle
-                                    </div>
-                                    <div class="detail-value">${vendor.vehicle_type || 'N/A'}</div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="detail-label">
-                                        <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        Verification
-                                    </div>
-                                    <div class="detail-value">${vendor.verification || 'N/A'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M9 17H7V11H5L12 5L19 11H17V17H15M13 17V13H11V17H13Z" stroke="currentColor" stroke-width="2"/>
-                                    </svg>
-                                    Vehicle
-                                </div>
-                                <div class="detail-value">${vendor.vehicle_type || 'N/A'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    Verification
-                                </div>
-                                <div class="detail-value">${vendor.verification || 'N/A'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M4 4H20C20.5523 4 21 4.44772 21 5V19C21 19.5523 20.5523 20 20 20H4C3.44772 20 3 19.5523 3 19V5C3 4.44772 3.44772 4 4 4Z" stroke="currentColor" stroke-width="2"/>
-                                        <path d="M3 10H21M8 14H10M16 14V17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                    </svg>
-                                    Return Service
-                                </div>
-                                <div class="detail-value">${vendor.return_service === 'Y' ? 'Yes' : 'No'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M3 5C3 3.89543 3.89543 3 5 3H9C10.1046 3 11 3.89543 11 5V9C11 10.1046 10.1046 11 9 11H5C3.89543 11 3 10.1046 3 9V5Z" stroke="currentColor" stroke-width="2"/>
-                                        <path d="M13 5C13 3.89543 13.8954 3 15 3H19C20.1046 3 21 3.89543 21 5V9C21 10.1046 20.1046 11 19 11H15C13.8954 11 13 10.1046 13 9V5Z" stroke="currentColor" stroke-width="2"/>
-                                        <path d="M3 15C3 13.8954 3.89543 13 5 13H9C10.1046 13 11 13.8954 11 15V19C11 20.1046 10.1046 21 9 21H5C3.89543 21 3 20.1046 3 19V15Z" stroke="currentColor" stroke-width="2"/>
-                                        <path d="M13 15C13 13.8954 13.8954 13 15 13H19C20.1046 13 21 13.8954 21 15V19C21 20.1046 20.1046 21 19 21H15C13.8954 21 13 20.1046 13 19V15Z" stroke="currentColor" stroke-width="2"/>
-                                    </svg>
-                                    WhatsApp
-                                </div>
-                                <div class="detail-value">${vendor.whatsapp_number || 'N/A'}</div>
-                            </div>
-                        </div>
-                        ${vendor.notes ? `<div class="notes">${vendor.notes}</div>` : ''}
-                    </div>
-                `;
+                htmlContent += buildVendorCard(vendor, index, vendor.similarity_score);
             });
 
             htmlContent += '</div>';
@@ -1048,7 +933,6 @@
             resultsDiv.innerHTML = htmlContent;
             
             // Auto-scroll to show AI summary box after cards are rendered
-            // Small delay to ensure DOM is updated
             setTimeout(() => {
                 const aiSummaryBox = document.getElementById('aiSummaryBox');
                 if (aiSummaryBox) {

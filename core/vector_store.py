@@ -154,23 +154,59 @@ class VectorStore:
     
     def save(self, file_path: str):
         """
-        Save vector store to disk
+        Save vector store to disk with database metadata for change detection
         
         Args:
             file_path: Path to save file
         """
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         
+        # Calculate database fingerprint for change detection
+        db_fingerprint = self._calculate_db_fingerprint(self.metadata)
+        
         data = {
             'embeddings': self.embeddings,
             'metadata': self.metadata,
-            'dimension': self.dimension
+            'dimension': self.dimension,
+            'db_fingerprint': db_fingerprint,
+            'vendor_count': len(self.metadata)
         }
         
         with open(file_path, 'wb') as f:
             pickle.dump(data, f)
         
         print(f"✓ Saved vector store with {len(self.metadata)} items to {file_path}")
+    
+    def _calculate_db_fingerprint(self, metadata: List[Dict[str, Any]]) -> str:
+        """
+        Calculate a fingerprint of the database state for change detection
+        
+        Args:
+            metadata: List of vendor records
+            
+        Returns:
+            Fingerprint string (hash of critical fields)
+        """
+        import hashlib
+        import json
+        
+        # Create fingerprint from vendor IDs and updated_at timestamps
+        fingerprint_data = []
+        for vendor in metadata:
+            # Include ID, updated_at, and notes_count for change detection
+            fp = {
+                'id': vendor.get('id'),
+                'updated_at': vendor.get('updated_at', ''),
+                'notes_count': vendor.get('notes_count', 0)
+            }
+            fingerprint_data.append(fp)
+        
+        # Sort by ID for consistent hashing
+        fingerprint_data.sort(key=lambda x: x.get('id', 0))
+        
+        # Create hash
+        fingerprint_str = json.dumps(fingerprint_data, sort_keys=True)
+        return hashlib.md5(fingerprint_str.encode()).hexdigest()
     
     def load(self, file_path: str):
         """
@@ -189,9 +225,42 @@ class VectorStore:
         self.embeddings = data.get('embeddings')
         self.metadata = data.get('metadata', [])
         self.dimension = data.get('dimension')
+        self.db_fingerprint = data.get('db_fingerprint')
+        self.vendor_count = data.get('vendor_count', len(self.metadata))
         
         print(f"✓ Loaded vector store with {len(self.metadata)} items from {file_path}")
         return True
+    
+    def is_stale(self, current_metadata: List[Dict[str, Any]]) -> bool:
+        """
+        Check if cached vector store is stale compared to current database
+        
+        Args:
+            current_metadata: Current vendor data from database
+            
+        Returns:
+            True if cache is stale and should be rebuilt
+        """
+        # If no fingerprint exists, consider it stale
+        if not hasattr(self, 'db_fingerprint') or self.db_fingerprint is None:
+            print("⚠ No database fingerprint found in cache - will rebuild")
+            return True
+        
+        # Check vendor count first (quick check)
+        if len(current_metadata) != self.vendor_count:
+            print(f"⚠ Vendor count changed: {self.vendor_count} → {len(current_metadata)} - will rebuild")
+            return True
+        
+        # Calculate current fingerprint
+        current_fingerprint = self._calculate_db_fingerprint(current_metadata)
+        
+        # Compare fingerprints
+        if current_fingerprint != self.db_fingerprint:
+            print("⚠ Database content changed (updates/edits/notes) - will rebuild cache")
+            return True
+        
+        print("✓ Cache is up-to-date with database")
+        return False
     
     def update_metadata(self, index: int, new_metadata: Dict[str, Any]):
         """

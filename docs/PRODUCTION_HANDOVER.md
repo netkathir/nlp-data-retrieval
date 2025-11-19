@@ -83,10 +83,9 @@ DATA_TYPE = "json"
 # DATA_PATH = "data/vendors.xlsx"
 # DATA_TYPE = "excel"
 
-# Option 4: SQL Database
-# DATA_TYPE = "sql"
-# SQL_DATABASE_URL = "postgresql://user:pass@host/db"
-# SQL_TABLE_NAME = "vendors"
+# Option 4: PostgreSQL Database (Default)
+# DATA_TYPE = "postgresql"
+# POSTGRES_TABLE_NAME = "vendors"
 ```
 
 **Client Action:** 
@@ -95,10 +94,10 @@ DATA_TYPE = "json"
 3. Update path/connection string
 
 **Supported Formats:**
+- ✅ PostgreSQL (Cloud or Local) - requires `psycopg2-binary`
 - ✅ JSON (.json)
 - ✅ CSV (.csv)
 - ✅ Excel (.xlsx, .xls) - requires `openpyxl`
-- ✅ SQL (PostgreSQL, MySQL, SQLite) - requires `sqlalchemy`
 
 ---
 
@@ -287,24 +286,32 @@ DATA_TYPE = "csv"
 3. Update field mappings
 4. Restart server
 
-### Scenario 3: Client has SQL Database
+### Scenario 3: Client has PostgreSQL Database
 
 1. Install dependencies:
 ```bash
-pip install sqlalchemy psycopg2-binary  # For PostgreSQL
-# OR
-pip install sqlalchemy pymysql          # For MySQL
+pip install psycopg2-binary
 ```
 
-2. Update `config.py`:
+2. Configure credentials in `.env`:
+```bash
+POSTGRES_HOST=your-postgres-host.com
+POSTGRES_PORT=5432
+POSTGRES_USER=your_username
+POSTGRES_PASSWORD=your_password
+POSTGRES_DATABASE=your_database_name
+```
+
+3. Update `config.py`:
 ```python
-DATA_TYPE = "sql"
-SQL_DATABASE_URL = "postgresql://username:password@host:5432/database"
-SQL_TABLE_NAME = "products"
+DATA_TYPE = "postgresql"
+POSTGRES_TABLE_NAME = "products"
 ```
 
-3. Update field mappings
-4. Restart server
+4. Update field mappings to match your PostgreSQL table columns
+5. Restart server
+
+**Note:** The system only READS from the database. No write operations (INSERT, UPDATE, DELETE) are performed during normal operation. Data import is handled separately via `scripts/import_vendors.py`.
 
 ---
 

@@ -40,6 +40,7 @@ class SemanticSearch:
     def initialize(self, force_rebuild: bool = False):
         """
         Initialize the search engine by loading or building vector store
+        Also checks if cache is stale and rebuilds if necessary
         
         Args:
             force_rebuild: Force rebuilding embeddings even if cache exists
@@ -48,14 +49,35 @@ class SemanticSearch:
         if force_rebuild:
             print("Clearing existing vector store...")
             self.vector_store.clear()
-        
-        # Try to load existing vector store
-        if not force_rebuild and self.vector_store.load(self.vector_store_path):
+            self._build_vector_store()
+            self.vector_store.save(self.vector_store_path)
             self.initialized = True
             print(f"✓ Search engine initialized with {self.vector_store.get_count()} vendors")
             return
         
-        # Build new vector store
+        # Try to load existing vector store
+        cache_loaded = self.vector_store.load(self.vector_store_path)
+        
+        if cache_loaded:
+            # Check if cache is stale by comparing with current database
+            print("Checking if cache is up-to-date...")
+            current_vendors = self.data_loader.load()
+            
+            if self.vector_store.is_stale(current_vendors):
+                # Cache is stale - rebuild
+                print("Rebuilding vector store with updated data...")
+                self.vector_store.clear()
+                self._build_vector_store()
+                self.vector_store.save(self.vector_store_path)
+            else:
+                # Cache is current - use it
+                print("✓ Using cached embeddings")
+            
+            self.initialized = True
+            print(f"✓ Search engine initialized with {self.vector_store.get_count()} vendors")
+            return
+        
+        # No cache found - build new vector store
         print("Building vector store from data...")
         self._build_vector_store()
         

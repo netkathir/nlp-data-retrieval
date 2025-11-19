@@ -1,12 +1,14 @@
 # 🚛 AI-Powered Semantic Search Tool
 
-An intelligent, **100% configurable** framework for semantic search across database records using OpenAI embeddings and MySQL.
+An intelligent, **100% configurable** framework for semantic search across database records using OpenAI embeddings and PostgreSQL.
 
 ## 🌟 Features
 
 ✅ **Natural Language Search** - Ask questions in plain English  
 ✅ **Semantic Understanding** - Finds relevant results without exact keywords  
-✅ **MySQL Backend** - Production-ready database storage  
+✅ **PostgreSQL Backend** - Production-ready cloud or local database storage with JSONB support  
+✅ **Temporal Note Tracking** - Prioritizes recent comments over older ones with automatic timestamps  
+✅ **Auto Cache Invalidation** - Detects database changes and rebuilds embeddings automatically  
 ✅ **Pure Field Index Architecture** - Works with any database schema  
 ✅ **Configurable Weights** - Boost important fields in search results  
 ✅ **Keyword Detection** - Automatic specialization matching (electronics, pharma, etc.)  
@@ -65,11 +67,11 @@ Code: vendor['transport_name']  (mapped automatically)
 # 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Setup MySQL database
-python scripts/setup_mysql.py
+# 2. Setup PostgreSQL database
+python scripts/import_vendors.py
 
 # 3. Configure settings
-# Edit config.py - add your OPENAI_API_KEY to .env
+# Add credentials to .env and your OPENAI_API_KEY
 
 # 4. Run the API
 python api.py
@@ -91,16 +93,17 @@ warehouse-ai-tool/
 │   └── response_generator.py # AI response formatting
 │
 ├── utils/                    # Utility modules
-│   ├── data_loader.py        # MySQL data loading
+│   ├── data_loader.py        # PostgreSQL data loading
 │   └── text_processor.py     # Text preprocessing with weights
 │
 ├── scripts/                  # Setup utilities
-│   └── setup_mysql.py        # Database initialization
+│   └── import_vendors.py     # Database initialization
 │
 ├── data/                     # Data and cache storage
-│   ├── vendors.json          # Sample data for import
+│   ├── vendors_30.csv        # Sample data (60 vendors with realistic duplicates)
+│   ├── vendors_30.xlsx       # Sample data (Excel)
 │   └── embeddings/           # Cached embeddings
-│       └── cache_mysql.pkl   # Vector cache
+│       └── cache_postgresql.pkl   # Vector cache
 │
 └── docs/                     # Documentation
     ├── README.md             # This file
@@ -190,35 +193,41 @@ FIELD_MAP = {
     0: {
         "name": "transport_name",        # Logical name for code
         "label": "Transport Company",    # Display name for UI
+        "icon": "truck.svg",             # SVG icon file in /static/icons/
         "type": "text",
         "searchable": True,              # Include in search?
         "weight": 3,                     # Embedding weight (1-15)
         "display_in_card": True,         # Show in result cards?
-        "filter": False,                 # Enable as filter?
-        "icon": "🚛"                     # UI icon
+        "filter": False                  # Enable as filter?
     },
     1: {
         "name": "name",
         "label": "Contact Person",
+        "icon": "user.svg",
         "type": "text",
         "searchable": True,
         "weight": 1,                     # Low weight - less important
         "display_in_card": False,
         "filter": False
     },
+    },
     2: {
         "name": "vendor_city",
         "label": "City",
+        "icon": "map-pin.svg",
         "type": "text",
         "searchable": True,
         "weight": 8,                     # High weight - very important!
         "display_in_card": True,
-        "filter": True,                  # Enable city filter
-        "icon": "📍"
+        "filter": True                   # Enable city filter
     },
     # ... fields 3-15
 }
 ```
+
+**Note**: All field icons are SVG files stored in `/static/icons/`. To customize icons:
+1. Replace SVG files in `/static/icons/` directory, or
+2. Update the "icon" filename in FIELD_MAP
 
 ### Step 2: Configure Active Fields
 
@@ -404,10 +413,10 @@ SPECIALIZATION_KEYWORDS = {
 
 3. **Update AI prompts** in AI_SUMMARY_CONFIG, AI_INSIGHTS_CONFIG
 
-4. **Create MySQL table**:
+4. **Create PostgreSQL table**:
 ```sql
 CREATE TABLE properties (
-    id INT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     field_0 TEXT,  -- property_title
     field_1 TEXT,  -- address
     field_2 TEXT,  -- price
@@ -419,33 +428,32 @@ CREATE TABLE properties (
 
 5. **Done!** No code changes needed - just configuration.
 
-## 🔑 MySQL Setup
+## 🔑 PostgreSQL Setup
 
 ### Database Configuration
-```python
-MYSQL_CONFIG = {
-    "host": "localhost",
-    "user": "your_username",
-    "password": "your_password",
-    "database": "warehouse_ai_db",
-    "charset": "utf8mb4"
-}
+Add credentials to `.env`:
+```bash
+POSTGRES_HOST=your-host.com
+POSTGRES_PORT=5432
+POSTGRES_USER=your_username
+POSTGRES_PASSWORD=your_password
+POSTGRES_DATABASE=transport_vendor_db
 ```
 
 ### Initialize Database
 ```bash
-python scripts/setup_mysql.py
+python scripts/import_vendors.py
 ```
 
 This creates:
-- Database: `warehouse_ai_db`
 - Table: `vendors` with field_0 through field_15
-- Imports data from `data/vendors.json`
+- Imports 60 sample vendors from `data/vendors.json`
+- Connects to cloud or local PostgreSQL database
 
 ## 🚀 Performance
 
 **First Search:**
-- Loads from MySQL: ~0.5 seconds
+- Loads from PostgreSQL: ~0.5 seconds
 - Generates embeddings: ~3-5 seconds
 - Caches vectors: instant next time
 
@@ -455,7 +463,7 @@ This creates:
 - Total: ~0.3 seconds per search
 
 **Scaling:**
-- Current: 12 vendors (demo)
+- Current: 60 vendors (demo with duplicates for comparison)
 - Tested: 10,000+ vendors
 - For larger datasets: Consider FAISS for approximate similarity
 
@@ -486,7 +494,7 @@ python -c "from utils.text_processor import TextProcessor; from utils.data_loade
 ### Rebuild Embeddings
 ```bash
 # Delete cache to force rebuild
-rm data/embeddings/cache_mysql.pkl
+rm data/embeddings/cache_postgresql.pkl
 
 # Restart API (auto-rebuilds)
 python api.py
@@ -494,14 +502,15 @@ python api.py
 
 ### Add New Data
 ```bash
-# Option 1: MySQL import
-mysql -u root -p warehouse_ai_db < your_data.sql
+# Option 1: Import from CSV/Excel
+python scripts/import_vendors.py  # Edit to point to your data
 
-# Option 2: JSON import via setup script
-python scripts/setup_mysql.py  # Edit script to point to your JSON
-
-# Option 3: Direct MySQL insert
+# Option 2: Direct PostgreSQL insert via psql
+psql -h your-host -U your-user -d your-database
 # INSERT INTO vendors (field_0, field_1, ...) VALUES (...)
+
+# Option 3: Use the import script programmatically
+# Edit import_vendors.py to load from your custom data source
 ```
 
 ## 📚 Documentation
@@ -512,10 +521,10 @@ python scripts/setup_mysql.py  # Edit script to point to your JSON
 
 ## 🐛 Troubleshooting
 
-**"MySQL connection error":**
-- Check MYSQL_CONFIG in config.py
-- Ensure MySQL server is running: `mysql.server start`
-- Test connection: `mysql -u root -p`
+**"PostgreSQL connection error":**
+- Check .env file for correct PostgreSQL credentials
+- Ensure PostgreSQL is accessible (test with psql or database client)
+- Verify network/firewall settings for cloud databases
 
 **"API key is required":**
 - Add OPENAI_API_KEY to `.env` file
@@ -527,7 +536,7 @@ python scripts/setup_mysql.py  # Edit script to point to your JSON
 - Verify KEYWORD_REPETITION_COUNT is set (default: 10)
 
 **"Embeddings not updating":**
-- Delete cache: `rm data/embeddings/cache_mysql.pkl`
+- Delete cache: `rm data/embeddings/cache_postgresql.pkl`
 - Restart: `python api.py`
 
 **"Import errors":**
@@ -558,4 +567,4 @@ python scripts/setup_mysql.py  # Edit script to point to your JSON
 
 ---
 
-**Built with:** OpenAI Embeddings • MySQL • Python • Flask
+**Built with:** OpenAI Embeddings • PostgreSQL • Python • Flask
