@@ -88,8 +88,9 @@ Each field index maps to:
 - display_in_card: Show in result cards
 - display_in_table: Show in table view
 - display_in_brief: Show in brief format
-- filterable: Can filter by this field
 - icon: Optional icon for UI display
+
+Note: Filterable fields are defined separately in ADVANCED_FILTERS configuration.
 """
 
 # Define how many total fields exist in database
@@ -121,7 +122,6 @@ FIELD_MAP = {
         "display_in_card": True,
         "display_in_table": True,
         "display_in_brief": True,
-        "filterable": False,
         "icon": "truck.svg"
     },
     1: {
@@ -133,7 +133,6 @@ FIELD_MAP = {
         "display_in_card": True,
         "display_in_table": True,
         "display_in_brief": False,
-        "filterable": False,
         "icon": "user.svg"
     },
     2: {
@@ -145,7 +144,6 @@ FIELD_MAP = {
         "display_in_card": True,
         "display_in_table": True,
         "display_in_brief": True,
-        "filterable": True,
         "icon": "map-pin.svg"
     },
     3: {
@@ -157,7 +155,6 @@ FIELD_MAP = {
         "display_in_card": True,
         "display_in_table": True,
         "display_in_brief": True,
-        "filterable": True,
         "icon": "map.svg"
     },
     4: {
@@ -169,7 +166,6 @@ FIELD_MAP = {
         "display_in_card": True,
         "display_in_table": False,
         "display_in_brief": False,
-        "filterable": False,
         "icon": "briefcase.svg"
     },
     5: {
@@ -181,7 +177,6 @@ FIELD_MAP = {
         "display_in_card": True,
         "display_in_table": True,
         "display_in_brief": True,
-        "filterable": True,
         "icon": "truck.svg"
     },
     6: {
@@ -193,7 +188,6 @@ FIELD_MAP = {
         "display_in_card": True,
         "display_in_table": False,
         "display_in_brief": False,
-        "filterable": False,
         "icon": "globe.svg"
     },
     7: {
@@ -205,7 +199,6 @@ FIELD_MAP = {
         "display_in_card": True,
         "display_in_table": True,
         "display_in_brief": True,
-        "filterable": True,
         "icon": "building.svg"
     },
     8: {
@@ -217,7 +210,6 @@ FIELD_MAP = {
         "display_in_card": True,
         "display_in_table": False,
         "display_in_brief": False,
-        "filterable": False,
         "icon": "smartphone.svg"
     },
     9: {
@@ -229,7 +221,6 @@ FIELD_MAP = {
         "display_in_card": False,
         "display_in_table": False,
         "display_in_brief": False,
-        "filterable": False,
         "icon": "smartphone.svg"
     },
     10: {
@@ -241,7 +232,6 @@ FIELD_MAP = {
         "display_in_card": False,
         "display_in_table": False,
         "display_in_brief": False,
-        "filterable": False,
         "icon": "map.svg"
     },
     11: {
@@ -253,7 +243,6 @@ FIELD_MAP = {
         "display_in_card": True,
         "display_in_table": False,
         "display_in_brief": False,
-        "filterable": False,
         "icon": "repeat.svg"
     },
     12: {
@@ -265,7 +254,6 @@ FIELD_MAP = {
         "display_in_card": False,
         "display_in_table": False,
         "display_in_brief": False,
-        "filterable": False,
         "icon": "users.svg"
     },
     13: {
@@ -277,7 +265,6 @@ FIELD_MAP = {
         "display_in_card": True,
         "display_in_table": False,
         "display_in_brief": False,
-        "filterable": False,
         "icon": "users.svg"
     },
     14: {
@@ -289,7 +276,6 @@ FIELD_MAP = {
         "display_in_card": True,
         "display_in_table": True,
         "display_in_brief": False,
-        "filterable": True,
         "icon": "check-square.svg"
     },
     15: {
@@ -301,7 +287,6 @@ FIELD_MAP = {
         "display_in_card": True,
         "display_in_table": False,
         "display_in_brief": False,
-        "filterable": False,
         "icon": "file-text.svg"
     }
 }
@@ -313,9 +298,6 @@ BRIEF_DISPLAY_INDICES = [0, 2, 3, 5, 7]  # Fields shown in brief format
 
 # Search Configuration - Which field indices to include in embeddings
 SEMANTIC_SEARCH_FIELDS = [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15]  # Searchable fields
-
-# Filter Configuration - REMOVED (now derived from ADVANCED_FILTERS)
-# The system automatically extracts filterable fields from ADVANCED_FILTERS
 
 # Advanced Filters Configuration (for UI generation)
 # =======================================================
@@ -631,6 +613,7 @@ Please provide a concise, helpful summary of these results. Your response should
 3. For the relevant top match(es), include the contact person's name and phone number in a natural way (e.g., "Contact Ramesh Iyer at +91-9876543210") at the end.
 4. Highlight key characteristics (location, specializations, vehicle types) of the top matches
 5. Note any patterns or recommendations for the user
+6. If there are no suitable match, politely inform the user so, and recommend the next best matches.
 
 Keep the summary conversational and under 150 words.""",
     

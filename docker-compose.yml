@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Main application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: warehouse-ai-tool
+    ports:
+      - "5001:5001"
+    env_file:
+      - .env
+    environment:
+      # OpenAI API Configuration
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_API_BASE=${OPENAI_API_BASE:-}
+      
+      # PostgreSQL Configuration (use 'db' as host for docker network)
+      - POSTGRES_HOST=${POSTGRES_HOST:-db}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_USER=${POSTGRES_USER:-warehouse_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-warehouse_pass}
+      - POSTGRES_DATABASE=${POSTGRES_DATABASE:-warehouse_ai_db}
+      
+      # API Configuration
+      - API_HOST=0.0.0.0
+      - API_PORT=5001
+      - API_DEBUG=False
+      
+      # Embeddings cache path
+      - EMBEDDINGS_CACHE_PATH=/app/data/embeddings/cache_postgresql.pkl
+    volumes:
+      # Mount embeddings directory for persistence
+      - embeddings_data:/app/data/embeddings
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - warehouse-network
+
+  # PostgreSQL Database (optional - comment out if using external DB)
+  db:
+    image: postgres:15-alpine
+    container_name: warehouse-ai-db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-warehouse_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-warehouse_pass}
+      - POSTGRES_DB=${POSTGRES_DATABASE:-warehouse_ai_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - warehouse-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-warehouse_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+  embeddings_data:
+    driver: local
+
+networks:
+  warehouse-network:
+    driver: bridge
