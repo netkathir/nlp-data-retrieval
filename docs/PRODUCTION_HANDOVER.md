@@ -197,34 +197,40 @@ UI_CONFIG = {
 
 ---
 
-### 8. **Advanced Filters Configuration** (Lines 302-338) ⭐ CRITICAL
+### 8. **Advanced Filters Configuration** ⭐ CRITICAL - NOW 100% GENERIC
 
-**Purpose:** Configure which fields appear as UI filters and their input types
+**Purpose:** Configure which fields appear as UI filters - completely database-agnostic
 
 ```python
+# Filters are defined by field_index (from FIELD_MAP)
+# System automatically pulls labels and field names from FIELD_MAP
+# NO hardcoded assumptions - works with ANY database!
+
 ADVANCED_FILTERS = [
     {
-        "id": "filterState",              # HTML element ID
-        "label": "State",                 # Display label in UI
-        "field_name": "vendor_state",     # Maps to FIELD_MAP name
-        "type": "text",                   # Input type: text, select, or checkbox
-        "placeholder": "e.g., Maharashtra"
+        "field_index": 3,                  # Points to FIELD_MAP[3] (auto-labeled)
+        "type": "text",                    # Input type: text, select, or checkbox
+        "placeholder": "Filter by this field..."
     },
     {
-        "id": "filterCity",
-        "label": "City",
-        "field_name": "vendor_city",
+        "field_index": 2,                  # Points to FIELD_MAP[2] (auto-labeled)
         "type": "text",
-        "placeholder": "e.g., Mumbai"
+        "placeholder": "Filter by this field..."
     },
     {
-        "id": "filterVerification",
-        "label": "Verification",
-        "field_name": "verification",
-        "type": "select",                 # Dropdown with options
+        "field_index": 14,                 # Points to FIELD_MAP[14] (auto-labeled)
+        "type": "select",                  # Dropdown with options
         "options": ["All", "Verified", "Unverified", "Pending"]
     }
+    # Add as many filters as you want - system adapts automatically!
 ]
+
+# System automatically generates:
+# - Filter IDs: filter_0, filter_1, filter_2, etc.
+# - Labels: from FIELD_MAP[field_index]["label"]
+# - Field names: from FIELD_MAP[field_index]["name"]
+# - HTML form elements
+# - Filtering logic
 ```
 
 **Filter Types Available:**
@@ -239,26 +245,38 @@ ADVANCED_FILTERS = [
 4. **Result:** Using filters gives same high scores as typing the filter values in the query!
 
 **Client Action:** 
-- Add/remove filters as needed
-- Change field names to match their FIELD_MAP
-- Customize labels and placeholders for their domain
+- Add/remove unlimited filters by updating `ADVANCED_FILTERS`
+- Simply specify `field_index` from FIELD_MAP
+- Labels and field names are pulled automatically
 - Choose appropriate input types (text/select/checkbox)
+- No code changes needed - 100% configuration-driven!
+
+**Examples:**
+```python
+# Add a vehicle type filter:
+{"field_index": 5, "type": "select", "options": ["All", "Truck", "Van"]}
+
+# Add an owner/broker filter:
+{"field_index": 7, "type": "select", "options": ["All", "Owner", "Broker"]}
+
+# Add a checkbox filter:
+{"field_index": 11, "type": "checkbox"}
+```
 
 ---
 
-### 9. **Filter Field Mapping (Legacy)** (Lines 495-501) 
+### 9. **Filter Configuration - REMOVED** ✅
 
-**Note:** This is now superseded by `ADVANCED_FILTERS` above, but kept for backward compatibility.
+**Legacy configurations removed:**
+- ❌ `FILTER_FIELD_NAMES` - No longer needed
+- ❌ `FILTER_INDICES` - No longer needed
+- ❌ Hardcoded filter IDs/labels - Auto-generated now
 
-```python
-FILTER_FIELD_NAMES = {
-    "state": "vendor_state",        # UI filter → Database column
-    "city": "vendor_city",
-    "verification": "verification",
-}
-```
+**Everything is now controlled by:**
+- ✅ `ADVANCED_FILTERS` (field_index based)
+- ✅ `FIELD_MAP` (provides labels and field names)
 
-**Client Action:** Update if using legacy filter code, otherwise use `ADVANCED_FILTERS`
+The system is now 100% database-agnostic!
 
 ---
 
@@ -343,12 +361,8 @@ UI_CONFIG = {
 # Update primary display field
 PRIMARY_DISPLAY_FIELD = "product_name"
 
-# Update filter mappings
-FILTER_FIELD_NAMES = {
-    "state": "warehouse_state",
-    "city": "warehouse_city",
-    "verification": "stock_status"
-}
+# Filters are now automatically derived from ADVANCED_FILTERS + FIELD_MAP
+# No need for FILTER_FIELD_NAMES anymore!
 ```
 
 **Result:** Entire UI now talks about "products" instead of "vendors"!
@@ -366,10 +380,10 @@ FILTER_FIELD_NAMES = {
 
 - [ ] **2. Update `config.py` with client's data:**
   - [ ] `DATA_PATH` / `DATA_TYPE` configured
-  - [ ] `VENDOR_FIELDS` matches their schema
-  - [ ] `FIELD_WEIGHTS` adjusted for their use case
+  - [ ] `FIELD_MAP` matches their schema
+  - [ ] `FIELD_INDEX_WEIGHTS` adjusted for their use case
   - [ ] `UI_CONFIG` branded for their business
-  - [ ] `FILTER_FIELD_NAMES` mapped correctly
+  - [ ] `ADVANCED_FILTERS` configured (optional - for UI filters)
 
 - [ ] **3. Test with sample data:**
   ```bash
@@ -669,14 +683,14 @@ Edit the prompt in `config.py` at `SUMMARY_PROMPT_TEMPLATE` (lines 170-215) to c
 | Adjust search quality | `config.py` lines 115-149 | `FIELD_WEIGHTS` |
 | Rebrand UI | `config.py` lines 217-290 | `UI_CONFIG` |
 | Change threshold | `config.py` line 24 | `SIMILARITY_THRESHOLD` |
-| Map filters | `config.py` lines 295-301 | `FILTER_FIELD_NAMES` |
+| Configure filters | `config.py` ADVANCED_FILTERS | Field-index based (100% generic) |
 | Refresh embeddings | Web UI | Click "Refresh Embeddings" button |
 | Get AI summary | Web UI | Click "Generate AI Summary" button |
 
-**Remember:** Only edit `config.py` - never touch the code!
+**Remember:** Only edit `config.py` - never touch the code! System is now 100% database-agnostic.
 
 ---
 
-**Last Updated:** November 14, 2025  
-**Version:** 2.1 (Production-Ready with Enhanced Features)
+**Last Updated:** November 19, 2025  
+**Version:** 3.0 (100% Generic & Database-Agnostic)
 

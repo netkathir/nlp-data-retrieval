@@ -144,7 +144,7 @@
             <div class="modal-body">
                 <p>This will rebuild the search index from your database. This process may take 1-2 minutes.</p>
                 <div class="info-text">
-                    <strong>ℹ️ When to refresh:</strong><br>
+                    <strong>When to refresh:</strong><br>
                     • After updating/adding data to your database<br>
                     • When search results seem outdated<br>
                     • After changing field weights in config.py
@@ -161,17 +161,18 @@
         // Configuration
         const API_BASE = window.location.origin;
         let selectedFormat = 'ai_summary';  // Default to AI Summary
-        let selectedVerification = '';
+        let selectedFilters = {};  // Store selected filter values dynamically
         let thresholdValue = {{ similarity_threshold }};
         let maxResults = {{ max_results }};
         const PRIMARY_FIELD = '{{ primary_field }}';
-        const CITY_FIELD = '{{ filter_fields.city }}';
-        const STATE_FIELD = '{{ filter_fields.state }}';
         
         // Field configuration from config.py
         const FIELD_MAP = {{ field_map | tojson }};
         const CARD_DISPLAY_INDICES = {{ card_display_indices | tojson }};
         const PRIMARY_DISPLAY_INDEX = {{ primary_display_index }};
+        
+        // Advanced filters configuration (completely generic)
+        const ADVANCED_FILTERS = {{ advanced_filters | tojson }};
         
         // UI text configuration
         const UI_TEXT = {{ ui | tojson }};
@@ -213,8 +214,8 @@
             const lines = text.split('\n');
             let html = '';
             let listStack = [];  // Stack to track nested lists: [{type: 'ol'|'ul', indent: 0}]
-            let inVendorBlock = false;
-            let currentVendor = '';
+            let inItemBlock = false;
+            let currentItem = '';
             
             for (let i = 0; i < lines.length; i++) {
                 const rawLine = lines[i];
@@ -230,27 +231,27 @@
                     continue;
                 }
                 
-                // Check for vendor name in bold format: **Vendor Name (Location)**
-                const vendorMatch = line.match(/^\*\*([^*]+\([^)]+\))\*\*/);
-                if (vendorMatch) {
+                // Check for item name in bold format: **Item Name (Location)**
+                const itemMatch = line.match(/^\*\*([^*]+\([^)]+\))\*\*/);
+                if (itemMatch) {
                     // Close any open lists
                     while (listStack.length > 0) {
                         listStack.pop();
                         html += '</ul>';
                     }
-                    if (inVendorBlock) {
+                    if (inItemBlock) {
                         html += '</div>';
                     }
                     
-                    currentVendor = vendorMatch[1].trim();
+                    currentItem = itemMatch[1].trim();
                     
-                    // Start new vendor block with styling
+                    // Start new item block with styling
                     html += `<div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">`;
-                    html += `<h4 style="margin: 0 0 10px 0; color: #667eea; font-weight: 600;">${currentVendor}</h4>`;
-                    inVendorBlock = true;
+                    html += `<h4 style="margin: 0 0 10px 0; color: #667eea; font-weight: 600;">${currentItem}</h4>`;
+                    inItemBlock = true;
                     
-                    // Check if there's description text after the vendor name on the same line
-                    const restOfLine = line.substring(vendorMatch[0].length).trim();
+                    // Check if there's description text after the item name on the same line
+                    const restOfLine = line.substring(itemMatch[0].length).trim();
                     if (restOfLine.startsWith('-')) {
                         const description = processInlineMarkdown(restOfLine.substring(1).trim());
                         html += `<p style="margin: 10px 0 5px 0; line-height: 1.6;">${description}</p>`;
@@ -310,33 +311,33 @@
                 
                 // Headers
                 if (line.startsWith('###')) {
-                    if (inVendorBlock) {
+                    if (inItemBlock) {
                         html += '</div>';
-                        inVendorBlock = false;
+                        inItemBlock = false;
                     }
                     const headerText = processInlineMarkdown(line.replace(/^###\s*/, ''));
                     html += `<h3 style="margin-top: 20px; color: #667eea;">${headerText}</h3>`;
                     continue;
                 } else if (line.startsWith('##')) {
-                    if (inVendorBlock) {
+                    if (inItemBlock) {
                         html += '</div>';
-                        inVendorBlock = false;
+                        inItemBlock = false;
                     }
                     const headerText = processInlineMarkdown(line.replace(/^##\s*/, ''));
                     html += `<h2 style="margin-top: 20px; color: #667eea;">${headerText}</h2>`;
                     continue;
                 } else if (line.startsWith('#')) {
-                    if (inVendorBlock) {
+                    if (inItemBlock) {
                         html += '</div>';
-                        inVendorBlock = false;
+                        inItemBlock = false;
                     }
                     const headerText = processInlineMarkdown(line.replace(/^#\s*/, ''));
                     html += `<h1 style="margin-top: 20px; color: #667eea;">${headerText}</h1>`;
                     continue;
                 }
                 
-                // If we're in a vendor block, treat as continuation text
-                if (inVendorBlock) {
+                // If we're in an item block, treat as continuation text
+                if (inItemBlock) {
                     const processedLine = processInlineMarkdown(line);
                     html += `<p style="margin: 5px 0; line-height: 1.6;">${processedLine}</p>`;
                     continue;
@@ -353,7 +354,7 @@
                 listStack.pop();
                 html += '</ul>';
             }
-            if (inVendorBlock) {
+            if (inItemBlock) {
                 html += '</div>';
             }
             
@@ -403,7 +404,8 @@
         }
 
         function selectFilterOption(selectId, value, text) {
-            selectedVerification = value;
+            // Store the selected filter value dynamically
+            selectedFilters[selectId] = value;
             document.getElementById(selectId + 'Text').textContent = text;
             
             // Update selected state
@@ -551,7 +553,7 @@
                 console.error('Refresh error:', error);
                 resultsDiv.innerHTML = `
                     <div class="error">
-                        <h2>❌ Refresh Failed</h2>
+                        <h2>Error: Refresh Failed</h2>
                         <p>${error.message}</p>
                     </div>
                 `;
@@ -596,7 +598,7 @@
                     },
                     body: JSON.stringify({
                         query: currentSearchQuery,
-                        vendors: currentSearchResults
+                        [ENTITY_NAME]: currentSearchResults
                     })
                 });
 
@@ -629,7 +631,7 @@
                 console.error('Summary error:', error);
                 resultsDiv.innerHTML = `
                     <div class="error">
-                        <h2>❌ Summary Generation Failed</h2>
+                        <h2>Error: Summary Generation Failed</h2>
                         <p>${error.message}</p>
                     </div>
                 ` + currentResultsHTML;
@@ -650,20 +652,27 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    const statsHTML = `
-                        <div class="stat-card">
-                            <div class="stat-number">${data.stats.total_vendors}</div>
-                            <div class="stat-label">{{ ui.stat_total }}</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number">${data.stats.verified_vendors}</div>
-                            <div class="stat-label">{{ ui.stat_verified }}</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number">${data.stats.with_associations}</div>
-                            <div class="stat-label">With Associations</div>
-                        </div>
-                    `;
+                    // Get stats keys dynamically from the response
+                    const stats = data.stats;
+                    const statsKeys = Object.keys(stats);
+                    
+                    let statsHTML = '';
+                    
+                    // Display up to 3 stats dynamically
+                    for (let i = 0; i < Math.min(3, statsKeys.length); i++) {
+                        const key = statsKeys[i];
+                        const value = stats[key];
+                        // Convert key to readable label (e.g., total_items -> Total Items)
+                        const label = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                        
+                        statsHTML += `
+                            <div class="stat-card">
+                                <div class="stat-number">${value}</div>
+                                <div class="stat-label">${label}</div>
+                            </div>
+                        `;
+                    }
+                    
                     document.getElementById('stats').innerHTML = statsHTML;
                 }
             } catch (error) {
@@ -693,14 +702,30 @@
             // Auto-scroll to results section
             scrollToElement('results');
 
-            // Build request with configurable filter field names
+            // Build filters dynamically from ADVANCED_FILTERS configuration
             const filters = {};
-            const state = document.getElementById('filterState').value.trim();
-            const city = document.getElementById('filterCity').value.trim();
             
-            if (state) filters['{{ filter_fields.state }}'] = state;
-            if (city) filters['{{ filter_fields.city }}'] = city;
-            if (selectedVerification) filters['{{ filter_fields.verification }}'] = selectedVerification;
+            ADVANCED_FILTERS.forEach(filterConfig => {
+                const filterId = filterConfig.id;
+                const fieldName = filterConfig.field_name;
+                let filterValue = '';
+                
+                if (filterConfig.type === 'text') {
+                    // Get value from text input
+                    filterValue = document.getElementById(filterId).value.trim();
+                } else if (filterConfig.type === 'select') {
+                    // Get value from selected dropdown (stored in selectedFilters)
+                    filterValue = selectedFilters[filterId] || '';
+                } else if (filterConfig.type === 'checkbox') {
+                    // Get value from checkbox
+                    filterValue = document.getElementById(filterId).checked ? 'true' : '';
+                }
+                
+                // Only add non-empty filters to request
+                if (filterValue) {
+                    filters[fieldName] = filterValue;
+                }
+            });
 
             try {
                 const response = await fetch(`${API_BASE}/api/search`, {
@@ -769,20 +794,20 @@
 
         // Display functions for different formats
         
-        // Helper function to build a single vendor card dynamically from FIELD_MAP
-        function buildVendorCard(vendor, index, score) {
+        // Helper function to build a single card dynamically from FIELD_MAP
+        function buildCard(item, index, score) {
             const scoreClass = score >= 0.5 ? 'score-excellent' : score >= 0.3 ? 'score-good' : 'score-fair';
             
             // Format notes for better readability
             let formattedNotes = '';
-            if (vendor.notes_raw && vendor.notes_raw.length > 0) {
-                formattedNotes = vendor.notes_raw.map((note, idx) => {
+            if (item.notes_raw && item.notes_raw.length > 0) {
+                formattedNotes = item.notes_raw.map((note, idx) => {
                     const date = new Date(note.timestamp).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
-                    const marker = idx === 0 ? '🔵 Latest' : idx === vendor.notes_raw.length - 1 ? '⚪ Oldest' : '⚪';
+                    const marker = idx === 0 ? '▶ Latest' : idx === item.notes_raw.length - 1 ? '▪ Oldest' : '▪';
                     return `<div style="margin-bottom: 8px;"><strong>${marker}</strong> <span style="color: #666; font-size: 0.85em;">[${date}]</span><br/>${note.comment}</div>`;
                 }).join('');
-            } else if (vendor.notes) {
-                formattedNotes = vendor.notes;
+            } else if (item.notes) {
+                formattedNotes = item.notes;
             }
             
             // Build details dynamically from FIELD_MAP configuration
@@ -795,52 +820,67 @@
                 
                 const fieldName = fieldConfig.name;
                 const label = fieldConfig.label;
-                const iconFile = fieldConfig.icon || 'file-text.svg';  // Get icon filename from config
-                const iconPath = `/static/icons/${iconFile}`;  // Build full path
-                let value = vendor[fieldName];
+                const iconFile = fieldConfig.icon || 'file-text.svg';
+                const iconPath = `/static/icons/${iconFile}`;
+                let value = item[fieldName];
                 
-                // Special formatting for specific fields
-                if (fieldName === 'vendor_city' && vendor.vendor_state) {
-                    value = `${vendor.vendor_city || 'N/A'}, ${vendor.vendor_state || 'N/A'}`;
-                } else if (fieldName === 'return_service') {
-                    value = value === 'Y' ? 'Yes' : 'No';
-                } else if (fieldName === 'notes') {
-                    // Skip notes here, handled separately below
+                // Skip empty values
+                if (!value || value === 'N/A' || value === '') {
                     return;
                 }
                 
-                if (value && value !== 'N/A' && value !== '') {
-                    detailsHTML += `
-                        <div class="detail-item">
-                            <div class="detail-label">
-                                <img src="${iconPath}" class="icon" style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;" alt="">
-                                ${label}
-                            </div>
-                            <div class="detail-value">${value}</div>
-                        </div>`;
+                // Handle special field types if configured
+                if (fieldConfig.type === 'boolean' || fieldConfig.type === 'yes_no') {
+                    value = value === 'Y' || value === 'yes' || value === true ? 'Yes' : 'No';
                 }
+                
+                // Check if this field should be combined with another field
+                if (fieldConfig.combine_with) {
+                    const combineFieldIndex = fieldConfig.combine_with;
+                    const combineFieldConfig = FIELD_MAP[combineFieldIndex];
+                    if (combineFieldConfig) {
+                        const combineValue = item[combineFieldConfig.name];
+                        if (combineValue && combineValue !== 'N/A' && combineValue !== '') {
+                            value = `${value}, ${combineValue}`;
+                        }
+                    }
+                }
+                
+                // Skip notes field here, handled separately below
+                if (fieldConfig.name === 'notes') {
+                    return;
+                }
+                
+                detailsHTML += `
+                    <div class="detail-item">
+                        <div class="detail-label">
+                            <img src="${iconPath}" class="icon" style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;" alt="">
+                            ${label}
+                        </div>
+                        <div class="detail-value">${value}</div>
+                    </div>`;
             });
             
             // Get primary field for card title
             const primaryFieldConfig = FIELD_MAP[PRIMARY_DISPLAY_INDEX];
-            const primaryFieldName = primaryFieldConfig ? primaryFieldConfig.name : PRIMARY_FIELD;
+            const primaryFieldName = primaryFieldConfig ? primaryFieldConfig.name : Object.keys(item)[0];
             const primaryIconFile = primaryFieldConfig ? primaryFieldConfig.icon : 'building.svg';
             const primaryIconPath = `/static/icons/${primaryIconFile}`;
-            const cardTitle = vendor[primaryFieldName] || 'N/A';
+            const cardTitle = item[primaryFieldName] || 'N/A';
             
             return `
-                <div class="vendor-card">
-                    <div class="vendor-header">
+                <div class="result-card">
+                    <div class="result-header">
                         <div>
                             <span class="rank">#${index + 1}</span>
-                            <span class="vendor-title">
+                            <span class="result-title">
                                 <img src="${primaryIconPath}" class="icon" style="width: 20px; height: 20px; margin-right: 8px; vertical-align: middle;" alt="">
                                 ${cardTitle}
                             </span>
                         </div>
                         <span class="score-badge ${scoreClass}">${(score * 100).toFixed(1)}%</span>
                     </div>
-                    <div class="vendor-details">
+                    <div class="result-details">
                         ${detailsHTML}
                     </div>
                     ${formattedNotes ? `<div class="notes" style="line-height: 1.6;">${formattedNotes}</div>` : ''}
@@ -850,18 +890,37 @@
         
         function displayDetailedCards(results) {
             const resultsDiv = document.getElementById('results');
-            const resultsHTML = results.map((vendor, index) => {
-                return buildVendorCard(vendor, index, vendor.similarity_score);
+            const resultsHTML = results.map((item, index) => {
+                return buildCard(item, index, item.similarity_score);
             }).join('');
             resultsDiv.innerHTML = resultsHTML;
         }
 
         function displayBriefSummary(results) {
             const resultsDiv = document.getElementById('results');
+            
+            // Get primary field from FIELD_MAP
+            const primaryFieldConfig = FIELD_MAP[PRIMARY_DISPLAY_INDEX];
+            const primaryFieldName = primaryFieldConfig ? primaryFieldConfig.name : Object.keys(results[0])[0];
+            
+            // Try to find a secondary field for display from card display indices
+            // Use the second field in CARD_DISPLAY_INDICES if available
+            let secondaryFieldName = null;
+            if (CARD_DISPLAY_INDICES.length > 1) {
+                const secondaryIndex = CARD_DISPLAY_INDICES[1];
+                const secondaryConfig = FIELD_MAP[secondaryIndex];
+                if (secondaryConfig) {
+                    secondaryFieldName = secondaryConfig.name;
+                }
+            }
+            
             let summaryHTML = '<div style="background: white; padding: 30px; border-radius: 15px; font-family: monospace; white-space: pre-wrap;">';
-            results.forEach((vendor, index) => {
-                const score = (vendor.similarity_score * 100).toFixed(1);
-                summaryHTML += `${index + 1}. ${vendor[PRIMARY_FIELD] || 'N/A'} - ${vendor[CITY_FIELD] || 'N/A'} (${score}%)\n`;
+            results.forEach((item, index) => {
+                const score = (item.similarity_score * 100).toFixed(1);
+                const primaryValue = item[primaryFieldName] || 'N/A';
+                const secondaryValue = secondaryFieldName ? (item[secondaryFieldName] || '') : '';
+                const secondaryDisplay = secondaryValue ? ` - ${secondaryValue}` : '';
+                summaryHTML += `${index + 1}. ${primaryValue}${secondaryDisplay} (${score}%)\n`;
             });
             summaryHTML += '</div>';
             resultsDiv.innerHTML = summaryHTML;
@@ -869,28 +928,46 @@
 
         function displayTableView(results) {
             const resultsDiv = document.getElementById('results');
+            
+            // Get first 4 fields to display in table from CARD_DISPLAY_INDICES
+            const tableFields = CARD_DISPLAY_INDICES.slice(0, 4).map(index => {
+                const config = FIELD_MAP[index];
+                return config ? { name: config.name, label: config.label } : null;
+            }).filter(f => f !== null);
+            
             let tableHTML = `
                 <div style="background: white; padding: 30px; border-radius: 15px; overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                         <thead>
                             <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                                <th style="padding: 15px; text-align: left;">#</th>
-                                <th style="padding: 15px; text-align: left;">Name</th>
-                                <th style="padding: 15px; text-align: left;">Location</th>
-                                <th style="padding: 15px; text-align: left;">Vehicle</th>
+                                <th style="padding: 15px; text-align: left;">#</th>`;
+            
+            // Add column headers dynamically
+            tableFields.forEach(field => {
+                tableHTML += `<th style="padding: 15px; text-align: left;">${field.label}</th>`;
+            });
+            
+            tableHTML += `
                                 <th style="padding: 15px; text-align: left;">Score</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
-            results.forEach((vendor, index) => {
-                const score = (vendor.similarity_score * 100).toFixed(1);
+            
+            results.forEach((item, index) => {
+                const score = (item.similarity_score * 100).toFixed(1);
                 tableHTML += `
                     <tr style="border-bottom: 1px solid #dadce0;">
-                        <td style="padding: 15px;">${index + 1}</td>
-                        <td style="padding: 15px; font-weight: 600;">${vendor[PRIMARY_FIELD] || 'N/A'}</td>
-                        <td style="padding: 15px;">${vendor[CITY_FIELD] || 'N/A'}, ${vendor[STATE_FIELD] || 'N/A'}</td>
-                        <td style="padding: 15px;">${vendor.vehicle_type || 'N/A'}</td>
+                        <td style="padding: 15px;">${index + 1}</td>`;
+                
+                // Add field values dynamically
+                tableFields.forEach(field => {
+                    const value = item[field.name] || 'N/A';
+                    const weight = field === tableFields[0] ? 'font-weight: 600;' : '';
+                    tableHTML += `<td style="padding: 15px; ${weight}">${value}</td>`;
+                });
+                
+                tableHTML += `
                         <td style="padding: 15px;"><strong>${score}%</strong></td>
                     </tr>
                 `;
@@ -918,16 +995,12 @@
                         </div>
                     </div>
                 </div>
-                <div style="background: white; padding: 30px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);">
-                    <h3 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px;">Detailed Results</h3>
             `;
 
-            // Use shared buildVendorCard function for detailed cards
-            results.forEach((vendor, index) => {
-                htmlContent += buildVendorCard(vendor, index, vendor.similarity_score);
+            // Add each card separately (same as detailed cards format)
+            results.forEach((item, index) => {
+                htmlContent += buildCard(item, index, item.similarity_score);
             });
-
-            htmlContent += '</div>';
             
             // Display the cards immediately
             resultsDiv.innerHTML = htmlContent;
@@ -948,7 +1021,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        vendors: results,
+                        [ENTITY_NAME]: results,
                         query: query
                     })
                 });
@@ -996,13 +1069,13 @@
         }
 
         function startRecording() {
-            console.log('🎤 Starting audio recording with Whisper API...');
+            console.log('[Audio] Starting audio recording with Whisper API...');
             recordingStartTime = Date.now();
             
             // Start waveform visualization and recording
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    console.log('✓ Microphone access granted');
+                    console.log('[Audio] Microphone access granted');
                     mediaStream = stream;
                     audioChunks = [];
                     
@@ -1018,7 +1091,7 @@
                     };
                     
                     mediaRecorder.onstop = async () => {
-                        console.log('📤 Sending audio to Whisper Translation API...');
+                        console.log('[Audio] Sending audio to Whisper Translation API...');
                         
                         // Create audio blob
                         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -1047,8 +1120,8 @@
                             
                             if (data.success) {
                                 const transcript = data.text;
-                                console.log('✓ Translated to English:', transcript);
-                                console.log('  Source language detected:', data.language);
+                                console.log('[Audio] Translated to English:', transcript);
+                                console.log('[Audio] Source language detected:', data.language);
                                 
                                 // Check if transcript is empty or whitespace
                                 if (!transcript || transcript.trim() === '') {
@@ -1074,7 +1147,7 @@
                                         <div class="loading">
                                             <div class="spinner"></div>
                                             <div>Translated: "${transcript}"</div>
-                                            <div>Searching vendors...</div>
+                                            <div>Searching ${ENTITY_NAME}...</div>
                                         </div>
                                     `;
                                     
@@ -1085,7 +1158,7 @@
                                 throw new Error(data.user_message || data.error || 'Translation failed');
                             }
                         } catch (error) {
-                            console.error('❌ Translation error:', error);
+                            console.error('[Audio] Translation error:', error);
                             // Use user-friendly message
                             const errorMsg = error.message.includes('user_message') 
                                 ? error.message 
@@ -1151,7 +1224,7 @@
                     animateWaveform();
                 })
                 .catch(err => {
-                    console.error('❌ Error accessing microphone:', err);
+                    console.error('[Audio] Error accessing microphone:', err);
                     alert('Could not access microphone. Please check your permissions.\n\nError: ' + err.message);
                 });
         }
@@ -1162,17 +1235,17 @@
             // Check minimum recording duration
             const recordingDuration = Date.now() - recordingStartTime;
             if (recordingDuration < MIN_RECORDING_DURATION) {
-                console.log('⚠️ Recording too short, continuing...');
+                console.log('[Audio] Recording too short, continuing...');
                 // Show feedback to user
                 const indicator = document.getElementById('recordingIndicator');
-                indicator.innerHTML = '🎤 Keep talking... (min 0.5s)';
+                indicator.innerHTML = 'Keep talking... (min 0.5s)';
                 setTimeout(() => {
-                    indicator.innerHTML = '🔴 Recording...';
+                    indicator.innerHTML = 'Recording...';
                 }, 500);
                 return;
             }
             
-            console.log('⏹️ Stopping recording...');
+            console.log('[Audio] Stopping recording...');
             isRecording = false;
             
             // Stop media recorder

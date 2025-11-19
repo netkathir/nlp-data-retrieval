@@ -278,36 +278,48 @@ AI_QA_CONFIG = {
 
 ### Step 4: Configure Advanced Filters
 
-The UI's advanced filters are now **fully configurable** via `config.py`. Define which fields appear as filters and their input types:
+The UI's advanced filters are now **100% configurable and database-agnostic** via `config.py`. Define filters using field indices - labels and field names are automatically pulled from `FIELD_MAP`:
 
 ```python
+# Filters are completely generic - no hardcoded assumptions
+# Each filter references a field_index from FIELD_MAP
+# Labels and field names are auto-generated
 ADVANCED_FILTERS = [
     {
-        "id": "filterState",              # HTML element ID
-        "label": "State",                 # Display label
-        "field_name": "vendor_state",     # Maps to FIELD_MAP name
-        "type": "text",                   # Input type: text, select, or checkbox
-        "placeholder": "e.g., Maharashtra"
+        "field_index": 3,                  # Points to FIELD_MAP[3] (e.g., vendor_state)
+        "type": "text",                    # Input type: text, select, or checkbox
+        "placeholder": "Filter by this field..."
     },
     {
-        "id": "filterCity",
-        "label": "City",
-        "field_name": "vendor_city",
+        "field_index": 2,                  # Points to FIELD_MAP[2] (e.g., vendor_city)
         "type": "text",
-        "placeholder": "e.g., Mumbai"
+        "placeholder": "Filter by this field..."
     },
     {
-        "id": "filterVerification",
-        "label": "Verification",
-        "field_name": "verification",
-        "type": "select",                 # Dropdown select
+        "field_index": 14,                 # Points to FIELD_MAP[14] (e.g., verification)
+        "type": "select",                  # Dropdown select
         "options": ["All", "Verified", "Unverified", "Pending"]
     },
     {
-        "id": "filterReturnService",
-        "label": "Return Service",
-        "field_name": "return_service",
-        "type": "checkbox"                # Boolean checkbox
+        "field_index": 11,                 # Points to FIELD_MAP[11] (e.g., return_service)
+        "type": "checkbox"                 # Boolean checkbox
+    }
+    # Add as many filters as you want - system adapts automatically!
+]
+
+# System automatically:
+# - Generates filter IDs (filter_0, filter_1, filter_2, etc.)
+# - Pulls labels from FIELD_MAP[field_index]["label"]
+# - Pulls field names from FIELD_MAP[field_index]["name"]
+# - Creates HTML elements dynamically
+# - Handles filtering logic
+```
+
+**Key Benefits:**
+- ✅ **Zero hardcoded assumptions** - works with ANY database (products, jobs, real estate, etc.)
+- ✅ **Infinite scalability** - add 1, 5, 10, or 100 filters just by updating config
+- ✅ **Auto-labeling** - labels come from FIELD_MAP automatically
+- ✅ **No code changes needed** - everything controlled from config.py
     }
 ]
 ```

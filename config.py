@@ -314,40 +314,74 @@ BRIEF_DISPLAY_INDICES = [0, 2, 3, 5, 7]  # Fields shown in brief format
 # Search Configuration - Which field indices to include in embeddings
 SEMANTIC_SEARCH_FIELDS = [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15]  # Searchable fields
 
-# Filter Configuration - Which field indices can be used for filtering
-FILTER_INDICES = {
-    "state": 3,      # field_3 = vendor_state
-    "city": 2,       # field_2 = vendor_city
-    "verification": 14,  # field_14 = verification
-    "owner_broker": 7,   # field_7 = owner_broker
-    "vehicle_type": 5    # field_5 = vehicle_type
-}
+# Filter Configuration - REMOVED (now derived from ADVANCED_FILTERS)
+# The system automatically extracts filterable fields from ADVANCED_FILTERS
 
 # Advanced Filters Configuration (for UI generation)
-# Each filter has: label, field_name, type (text, select, checkbox), and optional options
+# =======================================================
+# COMPLETELY CONFIGURABLE - Add/remove/reorder filters as needed
+# The system automatically generates UI elements and handles filtering
+# 
+# Each filter configuration:
+#   - field_index: Which field from FIELD_MAP to filter by (e.g., 3 = vendor_state)
+#   - type: 'text' (text input), 'select' (dropdown), or 'checkbox' (boolean)
+#   - placeholder: Placeholder text for text inputs (optional)
+#   - options: List of options for select dropdowns (first option is default)
+#
+# EXAMPLES:
+# ---------
+# Text filter:
+#   {"field_index": 2, "type": "text", "placeholder": "Search by field..."}
+#
+# Dropdown filter:
+#   {"field_index": 14, "type": "select", "options": ["All", "Option1", "Option2"]}
+#
+# Checkbox filter:
+#   {"field_index": 11, "type": "checkbox"}
+#
+# TO CUSTOMIZE FOR YOUR DATABASE:
+# 1. Change field_index to match your FIELD_MAP indices
+# 2. Add/remove filters as needed (can have 0, 1, 5, 10+ filters!)
+# 3. Labels are automatically pulled from FIELD_MAP[field_index]["label"]
+# 4. Field names are automatically pulled from FIELD_MAP[field_index]["name"]
+#
+# Example: To add a vehicle type filter, just add:
+# {"field_index": 5, "type": "select", "options": ["All", "Truck", "Tempo", "Van"]}
+
 ADVANCED_FILTERS = [
     {
-        "id": "filterState",
-        "label": "State",
-        "field_name": "vendor_state",
+        "field_index": 3,  # field_3 = vendor_state (auto-labeled "State" from FIELD_MAP)
         "type": "text",
-        "placeholder": "e.g., Maharashtra"
+        "placeholder": "Filter by this field..."
     },
     {
-        "id": "filterCity",
-        "label": "City",
-        "field_name": "vendor_city",
+        "field_index": 2,  # field_2 = vendor_city (auto-labeled "City" from FIELD_MAP)
         "type": "text",
-        "placeholder": "e.g., Mumbai"
+        "placeholder": "Filter by this field..."
     },
     {
-        "id": "filterVerification",
-        "label": "Verification",
-        "field_name": "verification",
+        "field_index": 14,  # field_14 = verification (auto-labeled "Verification" from FIELD_MAP)
         "type": "select",
         "options": ["All", "Verified", "Unverified", "Pending"]
+    },
+    {
+        "field_index": 7,  # owner_broker
+        "type": "select",
+        "options": ["All", "Owner", "Broker"]
     }
 ]
+
+# TO ADD MORE FILTERS (just append to the list):
+# {
+#     "field_index": 5,  # vehicle_type
+#     "type": "select",
+#     "options": ["All", "Truck", "Tempo", "Van", "Container"]
+# },
+# {
+#     "field_index": 7,  # owner_broker
+#     "type": "select",
+#     "options": ["All", "Owner", "Broker"]
+# }
 
 # Primary Display Index (used as card title)
 PRIMARY_DISPLAY_INDEX = 0  # field_0 = transport_name

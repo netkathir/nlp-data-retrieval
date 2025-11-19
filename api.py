@@ -48,16 +48,36 @@ def index():
     try:
         field_map = config.FIELD_MAP
         card_display_indices = config.CARD_DISPLAY_INDICES
-        filter_indices = config.FILTER_INDICES
         primary_display_index = config.PRIMARY_DISPLAY_INDEX
         advanced_filters = config.ADVANCED_FILTERS
+        
+        # Build filter configuration from ADVANCED_FILTERS
+        # Generate dynamic IDs and extract labels from FIELD_MAP
+        filters_with_metadata = []
+        for idx, filter_config in enumerate(advanced_filters):
+            field_index = filter_config['field_index']
+            field_config = field_map.get(field_index, {})
+            
+            filter_data = {
+                'id': f'filter_{idx}',  # Generic ID: filter_0, filter_1, etc.
+                'field_index': field_index,
+                'field_name': field_config.get('name', f'field_{field_index}'),
+                'label': field_config.get('label', f'Field {field_index}'),
+                'type': filter_config['type'],
+                'placeholder': filter_config.get('placeholder', f'Filter by {field_config.get("label", "field")}...')
+            }
+            
+            if filter_config['type'] == 'select':
+                filter_data['options'] = filter_config.get('options', ['All'])
+            
+            filters_with_metadata.append(filter_data)
+            
     except AttributeError:
         # Fallback to legacy config if FIELD_MAP not available
         field_map = {}
         card_display_indices = []
-        filter_indices = {}
         primary_display_index = 0
-        advanced_filters = []
+        filters_with_metadata = []
     
     return render_template(
         'index.html',
@@ -65,13 +85,11 @@ def index():
         max_results=config.MAX_RESULTS,
         ui=config.UI_CONFIG,
         primary_field=getattr(config, 'PRIMARY_DISPLAY_FIELD', 'transport_name'),
-        filter_fields=getattr(config, 'FILTER_FIELD_NAMES', {}),
-        # New field index configuration
+        # New field index configuration (fully generic)
         field_map=field_map,
         card_display_indices=card_display_indices,
-        filter_indices=filter_indices,
         primary_display_index=primary_display_index,
-        advanced_filters=advanced_filters
+        advanced_filters=filters_with_metadata
     )
 
 

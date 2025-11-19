@@ -105,26 +105,26 @@ Open your browser and visit the URL to access the web interface.
    - **Table View** - Compact tabular format
 
 3. **Adjust filters** (optional):
-   - **Advanced Filters** (State, City, Verification, etc.) - Now fully configurable via `config.py`
+   - **Advanced Filters** - Now 100% configurable via `config.py` (add as many as you want!)
    - **Similarity threshold** - Minimum match quality (0-100%)
    - **Max results count** - How many results to display
 
-**Note:** Advanced filters are configured in `config.py` using `ADVANCED_FILTERS`. You can add/remove/modify filters without touching HTML:
+**Note:** Advanced filters are configured in `config.py` using `ADVANCED_FILTERS`. You can add/remove/modify unlimited filters without touching code:
 
 ```python
+# Filters are defined by field_index (from FIELD_MAP)
+# Labels and field names are automatically pulled from FIELD_MAP
 ADVANCED_FILTERS = [
-    {
-        "id": "filterState",
-        "label": "State",
-        "field_name": "vendor_state",
-        "type": "text",  # or "select" or "checkbox"
-        "placeholder": "e.g., Maharashtra"
-    },
-    # Add more filters as needed
+    {"field_index": 3, "type": "text", "placeholder": "..."},      # Auto-labeled from FIELD_MAP
+    {"field_index": 2, "type": "text", "placeholder": "..."},      # Auto-labeled from FIELD_MAP
+    {"field_index": 14, "type": "select", "options": ["All", "Verified", "Unverified"]},
+    # Add as many filters as you want - system adapts automatically:
+    {"field_index": 5, "type": "select", "options": ["All", "Type1", "Type2"]},
+    {"field_index": 7, "type": "checkbox"},
 ]
 ```
 
-Filter values **augment the search query** for better semantic matching. Searching "electronics" with state filter "Tamil Nadu" gives the same high scores as typing "electronics in Tamil Nadu"!
+The system is **100% database-agnostic** - works with any entity type (products, jobs, real estate, etc.)!
 
 4. **View results** - The page auto-scrolls to show matching vendors
 
