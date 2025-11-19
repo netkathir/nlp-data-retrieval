@@ -1,6 +1,7 @@
 """
 Vector Store Module
 Handles storage and similarity search of embeddings
+Supports both local storage (pickle) and Pinecone vector database
 """
 
 import pickle
@@ -8,16 +9,43 @@ import os
 import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
 from sklearn.metrics.pairwise import cosine_similarity
+import config
+
+# Import Pinecone store if enabled
+if config.USE_PINECONE:
+    from core.pinecone_store import PineconeVectorStore
 
 
 class VectorStore:
-    """Store and search embeddings using cosine similarity"""
+    """Store and search embeddings using cosine similarity (local) or Pinecone (cloud)"""
     
     def __init__(self):
-        """Initialize VectorStore"""
-        self.embeddings = None  # numpy array of embeddings
-        self.metadata = []  # List of vendor records
+        """Initialize VectorStore with Pinecone or local storage"""
+        self.embeddings = None  # numpy array of embeddings (for local storage)
+        self.metadata = []  # List of vendor records (for local storage)
         self.dimension = None
+        
+        # Get storage mode from config
+        self.storage_mode = config.STORAGE_MODE  # "pinecone_only", "local_only", or "hybrid"
+        
+        # Initialize Pinecone if enabled
+        self.use_pinecone = config.USE_PINECONE and self.storage_mode in ["pinecone_only", "hybrid"]
+        self.pinecone_store = None
+        
+        if self.use_pinecone:
+            try:
+                self.pinecone_store = PineconeVectorStore()
+                if self.storage_mode == "pinecone_only":
+                    print(f"✅ Using Pinecone ONLY (cloud storage, no local cache)")
+                else:
+                    print(f"✅ Using Pinecone + local cache (hybrid mode)")
+            except Exception as e:
+                print(f"⚠️  Failed to initialize Pinecone: {e}")
+                print(f"   Falling back to local storage")
+                self.use_pinecone = False
+                self.storage_mode = "local_only"
+        else:
+            print(f"✅ Using local storage only")
         
     def add_embeddings(self, embeddings: List[List[float]], 
                       metadata: List[Dict[str, Any]]):
@@ -34,21 +62,30 @@ class VectorStore:
         # Convert to numpy array for efficient computation
         embeddings_array = np.array(embeddings)
         
-        if self.embeddings is None:
-            self.embeddings = embeddings_array
+        # Store in Pinecone if enabled
+        if self.use_pinecone and self.pinecone_store:
+            self.pinecone_store.upsert_embeddings(embeddings_array, metadata)
+            # Also keep in memory for quick access
             self.metadata = list(metadata)
+            self.embeddings = embeddings_array
             self.dimension = embeddings_array.shape[1]
         else:
-            # Append to existing embeddings
-            self.embeddings = np.vstack([self.embeddings, embeddings_array])
-            self.metadata.extend(metadata)
+            # Local storage only
+            if self.embeddings is None:
+                self.embeddings = embeddings_array
+                self.metadata = list(metadata)
+                self.dimension = embeddings_array.shape[1]
+            else:
+                # Append to existing embeddings
+                self.embeddings = np.vstack([self.embeddings, embeddings_array])
+                self.metadata.extend(metadata)
         
         print(f"✓ Added {len(embeddings)} embeddings. Total: {len(self.metadata)}")
     
     def search(self, query_embedding: List[float], top_k: int = 5, 
                threshold: Optional[float] = None) -> List[Tuple[Dict[str, Any], float]]:
         """
-        Search for similar vectors using cosine similarity
+        Search for similar vectors using cosine similarity (local) or Pinecone (cloud)
         
         Args:
             query_embedding: Query vector
@@ -58,11 +95,80 @@ class VectorStore:
         Returns:
             List of tuples (metadata, similarity_score) sorted by similarity
         """
-        if self.embeddings is None or len(self.embeddings) == 0:
-            return []
-        
         # Convert query to numpy array
         query_vector = np.array(query_embedding).reshape(1, -1)
+        
+        # Use Pinecone if enabled
+        if self.use_pinecone and self.pinecone_store:
+            try:
+                # Query Pinecone
+                indices, similarities, metadata_list = self.pinecone_store.query(
+                    query_vector[0], 
+                    top_k=top_k * 3  # Get 3x results for boost filtering
+                )
+                
+                # Build results
+                results = []
+                
+                if self.storage_mode == "pinecone_only":
+                    # Cloud-only mode: use metadata from Pinecone
+                    import json
+                    for meta, similarity_score in zip(metadata_list, similarities):
+                        # Deserialize JSON fields (like notes_raw)
+                        deserialized_meta = dict(meta)
+                        for key, value in meta.items():
+                            if key.endswith('_json') and isinstance(value, str):
+                                try:
+                                    original_key = key[:-5]  # Remove '_json' suffix
+                                    deserialized_meta[original_key] = json.loads(value)
+                                    del deserialized_meta[key]  # Remove the _json version
+                                except:
+                                    pass  # Keep original if deserialization fails
+                        
+                        result = {
+                            **deserialized_meta,
+                            'similarity_score': float(similarity_score)
+                        }
+                        results.append((result, float(similarity_score)))
+                else:
+                    # Hybrid mode: use metadata from local cache
+                    import json
+                    if not self.metadata:
+                        print("⚠️  No local metadata - falling back to Pinecone metadata")
+                        for meta, similarity_score in zip(metadata_list, similarities):
+                            # Deserialize JSON fields (like notes_raw)
+                            deserialized_meta = dict(meta)
+                            for key, value in meta.items():
+                                if key.endswith('_json') and isinstance(value, str):
+                                    try:
+                                        original_key = key[:-5]  # Remove '_json' suffix
+                                        deserialized_meta[original_key] = json.loads(value)
+                                        del deserialized_meta[key]  # Remove the _json version
+                                    except:
+                                        pass  # Keep original if deserialization fails
+                            
+                            result = {
+                                **deserialized_meta,
+                                'similarity_score': float(similarity_score)
+                            }
+                            results.append((result, float(similarity_score)))
+                    else:
+                        for idx, similarity_score in zip(indices, similarities):
+                            if idx < len(self.metadata):
+                                result = {
+                                    **self.metadata[idx],
+                                    'similarity_score': float(similarity_score)
+                                }
+                                results.append((result, float(similarity_score)))
+                
+                return results
+            except Exception as e:
+                print(f"⚠️  Pinecone query failed: {e}")
+                print(f"   Falling back to local search")
+        
+        # Local cosine similarity search
+        if self.embeddings is None or len(self.embeddings) == 0:
+            return []
         
         # Calculate cosine similarity
         similarities = cosine_similarity(query_vector, self.embeddings)[0]
@@ -130,10 +236,54 @@ class VectorStore:
     def get_all_metadata(self) -> List[Dict[str, Any]]:
         """
         Get all stored metadata
+        In cloud-only mode, fetches from Pinecone if local metadata is empty
         
         Returns:
             List of all vendor records
         """
+        # If we have local metadata, return it
+        if self.metadata:
+            return self.metadata
+        
+        # Cloud-only mode: fetch metadata from Pinecone
+        if self.storage_mode == "pinecone_only" and self.use_pinecone and self.pinecone_store:
+            try:
+                # Query with a dummy vector to get all metadata
+                import numpy as np
+                dummy_query = np.zeros(3072)  # Match embedding dimension
+                
+                # Get all vectors (use large top_k)
+                stats = self.pinecone_store.get_stats()
+                total = stats.get('total_vectors', 0)
+                
+                if total > 0:
+                    # Fetch all vendor metadata
+                    indices, similarities, metadata_list = self.pinecone_store.query(
+                        dummy_query, 
+                        top_k=total
+                    )
+                    
+                    # Deserialize JSON fields
+                    import json
+                    deserialized_metadata = []
+                    for meta in metadata_list:
+                        deserialized_meta = dict(meta)
+                        for key, value in meta.items():
+                            if key.endswith('_json') and isinstance(value, str):
+                                try:
+                                    original_key = key[:-5]
+                                    deserialized_meta[original_key] = json.loads(value)
+                                    del deserialized_meta[key]
+                                except:
+                                    pass
+                        deserialized_metadata.append(deserialized_meta)
+                    
+                    # Cache it locally for performance
+                    self.metadata = deserialized_metadata
+                    return deserialized_metadata
+            except Exception as e:
+                print(f"⚠️  Failed to fetch metadata from Pinecone: {e}")
+        
         return self.metadata
     
     def get_count(self) -> int:
@@ -146,23 +296,53 @@ class VectorStore:
         return len(self.metadata) if self.metadata else 0
     
     def clear(self):
-        """Clear all embeddings and metadata"""
+        """Clear all embeddings and metadata (both local and Pinecone)"""
         self.embeddings = None
         self.metadata = []
         self.dimension = None
+        
+        # Clear Pinecone index if enabled
+        if self.use_pinecone and self.pinecone_store:
+            try:
+                print("🗑️  Clearing Pinecone index...")
+                self.pinecone_store.delete_all()
+            except Exception as e:
+                print(f"⚠️  Failed to clear Pinecone: {e}")
+        
         print("✓ Vector store cleared")
     
     def save(self, file_path: str):
         """
         Save vector store to disk with database metadata for change detection
+        Also syncs to Pinecone if enabled
         
         Args:
             file_path: Path to save file
         """
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        
         # Calculate database fingerprint for change detection
         db_fingerprint = self._calculate_db_fingerprint(self.metadata)
+        
+        # In cloud-only mode, only sync to Pinecone (skip local cache)
+        if self.storage_mode == "pinecone_only":
+            if self.use_pinecone and self.pinecone_store:
+                try:
+                    print(f"☁️  Syncing {len(self.metadata)} embeddings to Pinecone (cloud-only mode)...")
+                    # Clear existing vectors first
+                    self.pinecone_store.delete_all()
+                    # Upload new vectors with fingerprint
+                    self.pinecone_store.upsert_embeddings(self.embeddings, self.metadata, db_fingerprint)
+                    print(f"✅ Successfully synced to Pinecone (no local cache)")
+                    return
+                except Exception as e:
+                    print(f"⚠️  Failed to sync to Pinecone: {e}")
+                    print(f"   Cannot save - cloud-only mode requires Pinecone")
+                    return
+            else:
+                print(f"⚠️  Pinecone not available but storage_mode is 'pinecone_only'")
+                return
+        
+        # Local-only or hybrid mode: save to local cache
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         
         data = {
             'embeddings': self.embeddings,
@@ -172,10 +352,24 @@ class VectorStore:
             'vendor_count': len(self.metadata)
         }
         
+        # Save locally (for backup and metadata)
         with open(file_path, 'wb') as f:
             pickle.dump(data, f)
         
         print(f"✓ Saved vector store with {len(self.metadata)} items to {file_path}")
+        
+        # Sync to Pinecone if in hybrid mode
+        if self.storage_mode == "hybrid" and self.use_pinecone and self.pinecone_store:
+            try:
+                print(f"☁️  Syncing {len(self.metadata)} embeddings to Pinecone (hybrid mode)...")
+                # Clear existing vectors first
+                self.pinecone_store.delete_all()
+                # Upload new vectors with fingerprint
+                self.pinecone_store.upsert_embeddings(self.embeddings, self.metadata, db_fingerprint)
+                print(f"✅ Successfully synced to Pinecone")
+            except Exception as e:
+                print(f"⚠️  Failed to sync to Pinecone: {e}")
+                print(f"   Local cache saved successfully")
     
     def _calculate_db_fingerprint(self, metadata: List[Dict[str, Any]]) -> str:
         """
@@ -210,11 +404,67 @@ class VectorStore:
     
     def load(self, file_path: str):
         """
-        Load vector store from disk
+        Load vector store from disk or Pinecone
         
         Args:
             file_path: Path to load from
         """
+        # Cloud-only mode: load from Pinecone only (no local cache needed)
+        if self.storage_mode == "pinecone_only":
+            if self.use_pinecone and self.pinecone_store:
+                try:
+                    # Get fingerprint from Pinecone
+                    db_fingerprint, vendor_count = self.pinecone_store.get_db_fingerprint()
+                    
+                    stats = self.pinecone_store.get_stats()
+                    if stats['total_vectors'] > 0:
+                        print(f"✅ Found {stats['total_vectors']} vectors in Pinecone (cloud-only mode)")
+                        print(f"   No local cache needed")
+                        
+                        # Store fingerprint for change detection
+                        self.db_fingerprint = db_fingerprint
+                        self.vendor_count = vendor_count
+                        
+                        # We'll get metadata from Pinecone during queries
+                        return True
+                    else:
+                        print(f"⚠️  No vectors found in Pinecone")
+                        return False
+                except Exception as e:
+                    print(f"⚠️  Failed to check Pinecone: {e}")
+                    return False
+            else:
+                print(f"⚠️  Pinecone not available but storage_mode is 'pinecone_only'")
+                return False
+        
+        # Hybrid mode: load from Pinecone + local cache
+        if self.storage_mode == "hybrid":
+            if self.use_pinecone and self.pinecone_store:
+                try:
+                    if self.pinecone_store.check_exists():
+                        print(f"✅ Found embeddings in Pinecone")
+                        # Load local cache for metadata and fingerprinting
+                        if os.path.exists(file_path):
+                            with open(file_path, 'rb') as f:
+                                data = pickle.load(f)
+                            
+                            self.embeddings = data.get('embeddings')
+                            self.metadata = data.get('metadata', [])
+                            self.dimension = data.get('dimension')
+                            self.db_fingerprint = data.get('db_fingerprint')
+                            self.vendor_count = data.get('vendor_count', len(self.metadata))
+                            
+                            print(f"✓ Loaded {len(self.metadata)} items (metadata from local, vectors from Pinecone)")
+                            return True
+                        else:
+                            print(f"⚠️  Pinecone has vectors but no local cache found")
+                            print(f"   Will use Pinecone metadata")
+                            return True  # Can still work with Pinecone metadata
+                except Exception as e:
+                    print(f"⚠️  Failed to check Pinecone: {e}")
+                    print(f"   Falling back to local cache")
+        
+        # Local-only mode: load from local cache
         if not os.path.exists(file_path):
             print(f"No vector store found at {file_path}")
             return False
@@ -271,6 +521,23 @@ class VectorStore:
             new_metadata: New metadata dictionary
         """
         if 0 <= index < len(self.metadata):
+            self.metadata[index] = new_metadata
+        else:
+            raise IndexError(f"Index {index} out of range")
+    
+    def update_embedding(self, index: int, new_embedding: List[float], new_metadata: Dict[str, Any]):
+        """
+        Update both embedding and metadata for a specific item
+        
+        Args:
+            index: Index of item to update
+            new_embedding: New embedding vector
+            new_metadata: New metadata dictionary
+        """
+        if 0 <= index < len(self.metadata):
+            # Update embedding
+            self.embeddings[index] = np.array(new_embedding)
+            # Update metadata
             self.metadata[index] = new_metadata
         else:
             raise IndexError(f"Index {index} out of range")

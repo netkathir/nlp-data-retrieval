@@ -6,6 +6,7 @@ scikit-learn>=1.3.0
 flask>=3.0.0
 flask-cors>=4.0.0
 psycopg2-binary>=2.9.0  # For PostgreSQL (Primary DB)
+pinecone-client>=3.0.0  # For vector database storage
 
 # Optional: For Excel support
 openpyxl>=3.0.0

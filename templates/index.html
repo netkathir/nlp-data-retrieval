@@ -801,9 +801,14 @@
             // Format notes for better readability
             let formattedNotes = '';
             if (item.notes_raw && item.notes_raw.length > 0) {
-                formattedNotes = item.notes_raw.map((note, idx) => {
+                // Sort notes by timestamp descending (newest first) to ensure correct order
+                const sortedNotes = [...item.notes_raw].sort((a, b) => {
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                });
+                
+                formattedNotes = sortedNotes.map((note, idx) => {
                     const date = new Date(note.timestamp).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
-                    const marker = idx === 0 ? '▶ Latest' : idx === item.notes_raw.length - 1 ? '▪ Oldest' : '▪';
+                    const marker = idx === 0 ? '▶ Latest' : idx === sortedNotes.length - 1 ? '▪ Oldest' : '▪';
                     return `<div style="margin-bottom: 8px;"><strong>${marker}</strong> <span style="color: #666; font-size: 0.85em;">[${date}]</span><br/>${note.comment}</div>`;
                 }).join('');
             } else if (item.notes) {

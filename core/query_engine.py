@@ -64,8 +64,8 @@ class SemanticSearch:
             current_vendors = self.data_loader.load()
             
             if self.vector_store.is_stale(current_vendors):
-                # Cache is stale - rebuild
-                print("Rebuilding vector store with updated data...")
+                # Database changed - do full rebuild (fast and reliable)
+                print("Database changes detected - rebuilding embeddings...")
                 self.vector_store.clear()
                 self._build_vector_store()
                 self.vector_store.save(self.vector_store_path)

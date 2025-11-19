@@ -13,6 +13,18 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", None)
 
+# Pinecone Configuration (for vector database storage)
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_ENVIRONMENT = os.getenv("PINECONE_ENVIRONMENT", "us-east-1")
+PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "warehouse-ai-embeddings")
+USE_PINECONE = os.getenv("USE_PINECONE", "False").lower() == "true"  # Set to True to use Pinecone
+
+# Storage Mode Configuration
+# "pinecone_only" - Store only in Pinecone (no local cache, cloud-only)
+# "local_only" - Store only in local cache (no Pinecone, local-only)
+# "hybrid" - Store in both (Pinecone for vectors, local for metadata)
+STORAGE_MODE = os.getenv("STORAGE_MODE", "hybrid" if USE_PINECONE else "local_only")
+
 # Model Configuration
 EMBEDDING_MODEL = "text-embedding-3-large"  # Higher quality embeddings (3072 dimensions)
 CHAT_MODEL = "gpt-4o-mini"  # Good balance of quality and speed
@@ -614,6 +626,7 @@ Please provide a concise, helpful summary of these results. Your response should
 4. Highlight key characteristics (location, specializations, vehicle types) of the top matches
 5. Note any patterns or recommendations for the user
 6. If there are no suitable match, politely inform the user so, and recommend the next best matches.
+7. If the latest notes contain contradicting (usually semantic) information from older notes, prioritize the latest information and inform the changes.
 
 Keep the summary conversational and under 150 words.""",
     

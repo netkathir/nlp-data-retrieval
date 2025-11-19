@@ -694,3 +694,133 @@ Edit the prompt in `config.py` at `SUMMARY_PROMPT_TEMPLATE` (lines 170-215) to c
 **Last Updated:** November 19, 2025  
 **Version:** 3.0 (100% Generic & Database-Agnostic)
 
+---
+
+## 🐳 Docker Deployment with Pinecone
+
+### Why Docker + Pinecone?
+
+✅ **No Persistent Volumes** - All embeddings stored in Pinecone cloud  
+✅ **Container Safe** - Restart anytime without data loss  
+✅ **Multiple Instances** - Scale horizontally with shared index  
+✅ **Fast Startup** - Fingerprint check takes ~2 seconds  
+✅ **Auto-Sync** - Database changes automatically detected and synced  
+
+### Quick Docker Setup
+
+1. **Configure Environment** (`.env` file):
+```bash
+# OpenAI
+OPENAI_API_KEY=sk-...
+
+# Pinecone (Cloud Vector Storage)
+USE_PINECONE=True
+PINECONE_API_KEY=pcsk_...
+PINECONE_ENVIRONMENT=us-east-1
+PINECONE_INDEX_NAME=warehouse-ai-embeddings
+STORAGE_MODE=pinecone_only  # Recommended for Docker
+
+# Database
+DB_HOST=your_db_host
+DB_NAME=your_db_name
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+```
+
+2. **Build Image**:
+```bash
+docker build -t warehouse-ai-tool:latest .
+```
+
+3. **Run Container**:
+```bash
+# Option A: Docker Compose (easiest)
+docker-compose up -d
+
+# Option B: Docker Desktop GUI
+# 1. Go to Images → warehouse-ai-tool
+# 2. Click Run
+# 3. Add environment variables from .env
+# 4. Map port 5001:5001
+```
+
+4. **Access**: http://localhost:5001
+
+### Storage Modes
+
+| Mode | Best For | Pros | Cons |
+|------|----------|------|------|
+| `pinecone_only` | Docker/Production | No local files, scalable | Requires internet |
+| `hybrid` | Development | Fast + backup | Needs volumes in Docker |
+| `local_only` | Offline/Testing | Works offline | Data lost on container restart |
+
+### How It Works
+
+**First Run:**
+```
+Container starts → Connects to Pinecone → No vectors found
+→ Builds embeddings from DB → Uploads to Pinecone → Ready! (30s)
+```
+
+**Subsequent Runs:**
+```
+Container starts → Connects to Pinecone → Finds 61 vectors
+→ Checks fingerprint → If unchanged → Uses cache → Ready! (2s)
+```
+
+**After DB Changes:**
+```
+Click "Refresh" → Compares fingerprints → Detects changes
+→ Rebuilds embeddings → Syncs to Pinecone → Ready! (30s)
+```
+
+### Troubleshooting Docker
+
+**Container keeps rebuilding:**
+- Check logs for "✅ Successfully synced to Pinecone"
+- Verify `STORAGE_MODE=pinecone_only` in environment variables
+- Ensure Pinecone API key is valid
+- Check Pinecone dashboard shows 61 vectors (60 vendors + 1 fingerprint)
+
+**Stats show 0:**
+- Wait 10-15 seconds after startup (metadata pre-loading)
+- Check browser console for errors
+- Verify `/api/stats` endpoint returns data
+
+**Environment variables not loading:**
+- In docker-compose.yml, ensure `env_file: - .env` is present
+- Or pass variables explicitly: `docker run -e OPENAI_API_KEY=... -e PINECONE_API_KEY=...`
+
+### Pushing to Docker Registry
+
+```bash
+# Tag image
+docker tag warehouse-ai-tool:latest yourusername/warehouse-ai-tool:latest
+
+# Push to Docker Hub
+docker push yourusername/warehouse-ai-tool:latest
+
+# Or push to GitHub Container Registry
+docker tag warehouse-ai-tool:latest ghcr.io/yourusername/warehouse-ai-tool:latest
+docker push ghcr.io/yourusername/warehouse-ai-tool:latest
+```
+
+---
+
+## 📝 Update History
+
+**November 19, 2025:**
+- ✅ Fixed stats loading delay (pre-load metadata on startup)
+- ✅ Simplified update strategy (full rebuild instead of complex incremental)
+- ✅ Fixed notes date ordering (newest → oldest)
+- ✅ Added Docker + Pinecone deployment guide
+- ✅ Improved fingerprint tracking (prevents unnecessary rebuilds)
+
+**Previous Updates:**
+- Pinecone cloud storage integration
+- Cloud-only mode for Docker
+- Auto-sync on database changes
+- Statistics display fix
+- Documentation consolidation
+
+---
