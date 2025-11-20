@@ -101,6 +101,32 @@ DATA_TYPE = "json"
 
 ---
 
+### Database Setup
+
+**✅ PostgreSQL table already exists** with `field_0` through `field_15` columns
+**✅ 60 sample vendor records are pre-loaded**
+**✅ No need to create tables or import data manually**
+
+**To connect to your database:**
+
+1. Update `.env` with your PostgreSQL credentials:
+```bash
+POSTGRES_HOST=localhost  # or your cloud database host
+POSTGRES_PORT=5432
+POSTGRES_USER=your_username
+POSTGRES_PASSWORD=your_password
+POSTGRES_DATABASE=transport_vendor_db
+```
+
+2. Restart the application:
+```bash
+python api.py
+```
+
+The system will automatically connect and load embeddings from your database.
+
+---
+
 ### 4. **Database Schema Mapping** (Lines 58-76) ⭐ CRITICAL
 
 **Purpose:** Tell the system what columns exist in the client's database

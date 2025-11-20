@@ -67,13 +67,10 @@ Code: vendor['transport_name']  (mapped automatically)
 # 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Setup PostgreSQL database
-python scripts/import_vendors.py
+# 2. Configure .env with your credentials
+# (see QUICKSTART.md for details)
 
-# 3. Configure settings
-# Add credentials to .env and your OPENAI_API_KEY
-
-# 4. Run the API
+# 3. Run the API
 python api.py
 ```
 
@@ -452,15 +449,15 @@ POSTGRES_PASSWORD=your_password
 POSTGRES_DATABASE=transport_vendor_db
 ```
 
-### Initialize Database
+### Database Already Setup
 ```bash
-python scripts/import_vendors.py
+✅ PostgreSQL database is pre-configured
+✅ Vendor table already exists (field_0 through field_15)
+✅ 60 sample vendors pre-loaded
+✅ Just configure your .env file and run!
 ```
 
-This creates:
-- Table: `vendors` with field_0 through field_15
-- Imports 60 sample vendors from `data/vendors.json`
-- Connects to cloud or local PostgreSQL database
+Just add your PostgreSQL credentials to `.env` and run `python api.py` - the system will load embeddings automatically.
 
 ## 🚀 Performance
 
@@ -514,20 +511,16 @@ python api.py
 
 ### Add New Data
 ```bash
-# Option 1: Import from CSV/Excel
-python scripts/import_vendors.py  # Edit to point to your data
-
-# Option 2: Direct PostgreSQL insert via psql
+# Option 1: Direct PostgreSQL insert via psql
 psql -h your-host -U your-user -d your-database
 # INSERT INTO vendors (field_0, field_1, ...) VALUES (...)
 
-# Option 3: Use the import script programmatically
-# Edit import_vendors.py to load from your custom data source
-```
+# Option 2: Restart application (auto-detects database changes)
+python api.py
 
 ## 📚 Documentation
 
-- **[QUICKSTART.md](QUICKSTART.md)** - Get started in 4 steps
+- **[QUICKSTART.md](QUICKSTART.md)** - Get started in 3 steps
 - **[PRODUCTION_HANDOVER.md](PRODUCTION_HANDOVER.md)** - Architecture deep dive
 - **[config.py](../config.py)** - ALL configuration options
 
@@ -535,7 +528,7 @@ psql -h your-host -U your-user -d your-database
 
 **"PostgreSQL connection error":**
 - Check .env file for correct PostgreSQL credentials
-- Ensure PostgreSQL is accessible (test with psql or database client)
+- Ensure PostgreSQL is accessible (test with `psql -U username -h host`)
 - Verify network/firewall settings for cloud databases
 
 **"API key is required":**
@@ -549,11 +542,17 @@ psql -h your-host -U your-user -d your-database
 
 **"Embeddings not updating":**
 - Delete cache: `rm data/embeddings/cache_postgresql.pkl`
-- Restart: `python api.py`
+- Restart: `python api.py` (auto-rebuilds)
 
-**"Import errors":**
-- Install all deps: `pip install -r requirements.txt`
-- Check Python version: `python --version` (need 3.8+)
+**"Stats loading slow on first load":**
+- Normal behavior - first API call fetches all metadata from Pinecone (~10-15s)
+- Subsequent calls use cached metadata (instant)
+- Only happens once per restart
+
+**"Docker build takes too long":**
+- First build installs all dependencies (~22 minutes)
+- Subsequent builds use layer cache (~30 seconds)
+- Only reruns pip if requirements.txt changes
 
 ## 💡 Best Practices
 

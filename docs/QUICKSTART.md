@@ -1,91 +1,58 @@
 # 🚀 QUICK START GUIDE
 
 ## Prerequisites
-- Python 3.8 or higher
-- PostgreSQL database (local or cloud-hosted)
-- OpenAI API key
+- Python 3.11 or higher
+- PostgreSQL database (already created with vendor data)
+- OpenAI API key for embeddings
+- Pinecone API key (for cloud vector storage)
 
-## Setup (4 steps)
+## Setup (3 steps)
 
 ### 1. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Setup PostgreSQL Database
+### 2. Configure Your Database Connection
 
-**Option A: Using PostgreSQL Command Line**
+Create a `.env` file in the project root with your database credentials:
+
 ```bash
-# Connect to PostgreSQL
-psql -U postgres
-
-# Create database
-CREATE DATABASE transport_vendor_db;
-
-# Connect to the database
-\c transport_vendor_db
-
-# Create table
-CREATE TABLE vendors (
-    id SERIAL PRIMARY KEY,
-    field_0 VARCHAR(500),
-    field_1 VARCHAR(500),
-    field_2 VARCHAR(500),
-    field_3 VARCHAR(500),
-    field_4 VARCHAR(500),
-    field_5 VARCHAR(500),
-    field_6 VARCHAR(500),
-    field_7 VARCHAR(500),
-    field_8 VARCHAR(500),
-    field_9 VARCHAR(500),
-    field_10 TEXT,
-    field_11 TEXT,
-    field_12 VARCHAR(500),
-    field_13 VARCHAR(500),
-    field_14 VARCHAR(500),
-    field_15 TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-# Exit PostgreSQL
-\q
-```
-
-**Option B: Import Sample Data (Recommended)**
-```bash
-# Import 60 sample vendors from JSON
-python scripts/import_vendors.py
-```
-
-This will create the table and import 60 diverse vendor records from `data/vendors.json`.
-
-**Option C: Cloud-Hosted PostgreSQL**
-If using a cloud provider (Render, AWS RDS, etc.), get your connection details and configure the environment variables in step 3.
-
-### 3. Configure Settings
-
-Add your credentials to `.env`:
-```bash
-# OpenAI API Key
+# OpenAI API Key (for embeddings)
 OPENAI_API_KEY=sk-your-actual-key-here
 
-# PostgreSQL Database Connection
-POSTGRES_HOST=your-postgres-host.com
+# PostgreSQL Database Connection (local or cloud)
+POSTGRES_HOST=localhost          # or your cloud database host
 POSTGRES_PORT=5432
-POSTGRES_USER=your_username
+POSTGRES_USER=postgres           # or your username
 POSTGRES_PASSWORD=your_password
 POSTGRES_DATABASE=transport_vendor_db
+
+# Pinecone (for cloud vector storage)
+PINECONE_API_KEY=your-pinecone-key-here
+PINECONE_ENVIRONMENT=us-east-1
+PINECONE_INDEX=warehouse-ai
+
+# Storage Mode (choose one)
+STORAGE_MODE=pinecone_only       # Cloud-only (recommended for Docker)
+# STORAGE_MODE=hybrid            # Local cache + Pinecone backup
+# STORAGE_MODE=local             # Local SQLite only (for development)
 ```
 
-Edit `config.py` to customize:
-- **Field Mapping**: Customize `FIELD_MAP` for your field definitions
-- **Field Icons**: Update icon filenames in FIELD_MAP (SVG files in `/static/icons/`)
-- **Field Weights**: Adjust weights in FIELD_MAP (higher = more important for search)
-- **UI Text**: Customize `UI_CONFIG` for page titles, entity names, and labels
-- **Advanced Filters**: Configure `ADVANCED_FILTERS` to customize UI filter fields (see below)
-- **AI Behavior**: Customize `AI_SUMMARY_CONFIG`, `AI_INSIGHTS_CONFIG`, `AI_QA_CONFIG`
+**Database Setup:**
+- ✅ The PostgreSQL `vendors` table already exists with field_0 through field_15
+- ✅ 60 sample vendor records are pre-loaded in the database
+- ✅ No need to create tables or import data manually
 
-### 4. Run the Application
+**For Local Development:**
+```bash
+# If using local PostgreSQL on macOS:
+brew install postgresql
+brew services start postgresql
+psql postgres  # Connect to verify
+```
+
+### 3. Run the Application
 ```bash
 python api.py
 ```
@@ -105,26 +72,9 @@ Open your browser and visit the URL to access the web interface.
    - **Table View** - Compact tabular format
 
 3. **Adjust filters** (optional):
-   - **Advanced Filters** - Now 100% configurable via `config.py` (add as many as you want!)
+   - **Advanced Filters** - Configurable in `config.py` (add as many as you want!)
    - **Similarity threshold** - Minimum match quality (0-100%)
    - **Max results count** - How many results to display
-
-**Note:** Advanced filters are configured in `config.py` using `ADVANCED_FILTERS`. You can add/remove/modify unlimited filters without touching code:
-
-```python
-# Filters are defined by field_index (from FIELD_MAP)
-# Labels and field names are automatically pulled from FIELD_MAP
-ADVANCED_FILTERS = [
-    {"field_index": 3, "type": "text", "placeholder": "..."},      # Auto-labeled from FIELD_MAP
-    {"field_index": 2, "type": "text", "placeholder": "..."},      # Auto-labeled from FIELD_MAP
-    {"field_index": 14, "type": "select", "options": ["All", "Verified", "Unverified"]},
-    # Add as many filters as you want - system adapts automatically:
-    {"field_index": 5, "type": "select", "options": ["All", "Type1", "Type2"]},
-    {"field_index": 7, "type": "checkbox"},
-]
-```
-
-The system is **100% database-agnostic** - works with any entity type (products, jobs, real estate, etc.)!
 
 4. **View results** - The page auto-scrolls to show matching vendors
 
@@ -146,58 +96,48 @@ Example queries to try:
 - "Show me brokers with return service available"
 - "List all verified vendors handling electronics"
 
-## Configuration Architecture
+## Customizing Search Behavior
 
-The system uses a **pure field index architecture** for database compatibility:
+Edit `config.py` to customize:
 
-### Field Mapping (config.py)
+### Field Mapping
 ```python
 FIELD_MAP = {
     0: {
         "name": "transport_name",     # Logical name for code
         "label": "Transport Company",  # Display label for UI
         "icon": "truck.svg",          # SVG icon file in /static/icons/
-        "type": "text",
-        "searchable": True,
-        "weight": 3,                  # Embedding weight (1-15)
-        "display_in_card": True
+        "weight": 3,                  # Higher = more important for search
     },
-    1: {...},
-    # ... fields 2-15
+    # ... fields 1-15
 }
-```
-
-**Note**: Icons are now SVG files stored in `/static/icons/`. Change any icon by editing the SVG file or updating the "icon" field in FIELD_MAP.
-
-### Active Fields
-```python
-ACTIVE_FIELD_INDICES = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
-```
-
-### Search Configuration
-```python
-SEMANTIC_SEARCH_FIELDS = [0,1,2,3,4,5,6,7,10,11,12,13,14,15]  # Exclude phone numbers
-FIELD_INDEX_WEIGHTS = {0: 3, 1: 1, 2: 8, 3: 8, 5: 8, 15: 15}  # Auto-generated from FIELD_MAP
 ```
 
 ### Field Weights
-- **20**: Ultra critical fields (notes, descriptions, specializations) - Maximum semantic importance
-- **12**: High-importance (cities, states, vehicle types) - Critical for location/type searches
-- **6**: Medium-importance (service areas, verification, company names) - Important context
-- **2**: Low-importance (contact info, associations) - Metadata
+- **15**: Critical (notes, descriptions) - Maximum semantic importance
+- **8**: High-importance (locations, categories)
+- **3**: Medium-importance (names)
+- **1**: Low-importance (metadata)
 
-Higher weights make fields more influential in similarity scoring and matching.
-
-### Keyword Boosting
-The system detects specialization keywords (electronics, pharma, fragile, etc.) and boosts them:
+### AI Behavior
 ```python
-SPECIALIZATION_KEYWORDS = {
-    "electronic": ["electronics transport", "IT equipment", ...],
-    "fragile": ["fragile items", "delicate goods", ...],
-    # ... more categories
+AI_SUMMARY_CONFIG = {
+    "system_prompt": "You are a helpful assistant...",
+    "temperature": 0.7,
+    "max_tokens": 300,
 }
-KEYWORD_REPETITION_COUNT = 10  # Repeat detected keywords 10x
 ```
+
+### Advanced Filters (100% Configurable)
+```python
+ADVANCED_FILTERS = [
+    {"field_index": 3, "type": "text", "placeholder": "Filter by state..."},
+    {"field_index": 2, "type": "text", "placeholder": "Filter by city..."},
+    {"field_index": 14, "type": "select", "options": ["All", "Verified", "Unverified"]},
+]
+```
+
+Add as many filters as you want - no code changes needed!
 
 ## Using in Your Project
 
@@ -210,41 +150,70 @@ search = SemanticSearch()
 # Search
 results = search.query("your question here", top_k=5)
 
-# Access results using logical names
+# Access results
 for vendor in results:
-    print(vendor['transport_name'])  # Mapped from field_0
-    print(vendor['vendor_city'])     # Mapped from field_2
-    print(vendor['notes'])           # Mapped from field_15
+    print(f"{vendor['transport_name']}: {vendor['similarity_score']:.1%}")
 ```
 
-## Customizing for Your Database
+## Storage Modes
 
-1. **Update FIELD_MAP** in `config.py` with your field definitions
-2. **Adjust weights** based on field importance for your use case
-3. **Configure AI prompts** in AI_SUMMARY_CONFIG, AI_INSIGHTS_CONFIG, AI_QA_CONFIG
-4. **Update SPECIALIZATION_KEYWORDS** with your domain-specific keywords
-5. **Run** `python scripts/import_vendors.py` to import your data
+The system supports three storage modes (set in `.env`):
 
-The system is **100% configurable** via `config.py` - no code changes needed!
+### Cloud-Only (Recommended for Docker)
+```bash
+STORAGE_MODE=pinecone_only
+```
+- ✅ No local cache needed
+- ✅ Minimal disk space
+- ✅ Perfect for containerized deployments
+- ⚠️ First stats load slower (10-15s), then cached
+
+### Hybrid (Local Cache + Cloud Backup)
+```bash
+STORAGE_MODE=hybrid
+```
+- ✅ Fast local searches
+- ✅ Cloud backup if needed
+- ⚠️ Requires more disk space
+
+### Local Development
+```bash
+STORAGE_MODE=local
+```
+- ✅ Works offline
+- ✅ No API keys needed for testing
+- ⚠️ Slower than local cache mode
 
 ## Troubleshooting
 
-**"Import errors"**: Install packages: `pip install -r requirements.txt`
+**"PostgreSQL connection error"**
+- Check .env file for correct credentials
+- Verify PostgreSQL is running: `psql postgres`
+- For cloud databases, check firewall/network access
 
-**"PostgreSQL connection error"**: Check .env file for correct credentials, ensure PostgreSQL is accessible
+**"API key is required"**
+- Add OPENAI_API_KEY to .env file
+- Verify .env is in project root
 
-**"No API key"**: Add OPENAI_API_KEY to .env file
+**"Embeddings not updating"**
+- Delete cache: `rm data/embeddings/cache_postgresql.pkl`
+- Restart: `python api.py` (will rebuild embeddings automatically)
 
-**"Slow first run"**: Normal - building embeddings (cached in data/embeddings/cache_postgresql.pkl)
+**"Low similarity scores"**
+- Increase field weights in FIELD_MAP (especially notes field)
+- Add domain keywords to SPECIALIZATION_KEYWORDS
 
-**"Low similarity scores"**: Check field weights and KEYWORD_REPETITION_COUNT in config.py
+**"Docker build takes too long"**
+- Docker uses layer caching automatically
+- Only pip install reruns if requirements.txt changes
+- First build: ~22 minutes (installs all dependencies)
+- Subsequent builds: ~30 seconds (uses cache)
 
 ## Next Steps
 
-- Read full documentation in README.md
-- Explore PRODUCTION_HANDOVER.md for architecture details
-- Customize FIELD_MAP and AI configs for your domain
-- Add your own data via MySQL import or scripts/setup_mysql.py
+- Read full documentation in [README.md](README.md)
+- Explore [PRODUCTION_HANDOVER.md](PRODUCTION_HANDOVER.md) for architecture details
+- Customize `FIELD_MAP` and AI configs in `config.py` for your domain
 
 ---
-Need help? Check README.md for detailed documentation.
+Need help? Check [README.md](README.md) for detailed documentation.
