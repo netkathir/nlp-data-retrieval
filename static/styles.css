@@ -470,7 +470,7 @@ button:disabled {
 
 .stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 20px;
     margin-bottom: 30px;
 }
@@ -793,4 +793,427 @@ summary:hover {
 .custom-filter-select .select-dropdown.active {
     max-height: 200px;
     opacity: 1;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
+
+/* Tablet and smaller (iPad, tablets) */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    /* Header adjustments */
+    header {
+        padding: 30px 15px;
+        margin-bottom: 20px;
+    }
+
+    h1 {
+        font-size: 2rem;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    /* Stats - Make them compact for mobile */
+    .stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        padding: 15px 10px;
+        border-radius: 12px;
+    }
+
+    .stat-number {
+        font-size: 1.8rem;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        margin-top: 4px;
+    }
+
+    /* Search box */
+    .search-box {
+        padding: 20px 15px;
+        border-radius: 15px;
+    }
+
+    .search-input-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    input[type="text"] {
+        padding: 12px 20px;
+        font-size: 1rem;
+    }
+
+    button {
+        padding: 12px 20px;
+        font-size: 1rem;
+        width: 100%;
+    }
+
+    /* Utility buttons */
+    .utility-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .utility-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+
+    /* Filters */
+    .filters {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    /* Result cards */
+    .result-card {
+        padding: 20px 15px;
+        border-radius: 15px;
+    }
+
+    .result-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .result-info {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .info-row {
+        padding: 10px;
+    }
+
+    /* Table view - make scrollable */
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table thead {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    table tbody {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    /* Modal adjustments */
+    .modal-content {
+        width: 90%;
+        margin: 20px;
+        padding: 20px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .modal-btn {
+        width: 100%;
+    }
+}
+
+/* Mobile phones (smaller screens) */
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+
+    /* Header */
+    header {
+        padding: 20px 10px;
+        border-radius: 12px;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .icon-large {
+        width: 32px;
+        height: 32px;
+    }
+
+    .subtitle {
+        font-size: 0.9rem;
+    }
+
+    /* Stats - Ultra compact for phones */
+    .stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .stat-card {
+        padding: 12px 6px;
+        border-radius: 10px;
+    }
+
+    .stat-number {
+        font-size: 1.4rem;
+        font-weight: 800;
+    }
+
+    .stat-label {
+        font-size: 0.6rem;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
+        margin-top: 2px;
+    }
+
+    /* Search box */
+    .search-box {
+        padding: 15px 10px;
+        border-radius: 12px;
+    }
+
+    input[type="text"] {
+        padding: 10px 15px;
+        font-size: 0.95rem;
+        border-radius: 25px;
+    }
+
+    button {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+        border-radius: 25px;
+    }
+
+    .icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* Custom selects */
+    .custom-select label,
+    .custom-range label {
+        font-size: 0.9rem;
+    }
+
+    .select-button {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+
+    /* Result cards */
+    .result-card {
+        padding: 15px 10px;
+        border-radius: 12px;
+    }
+
+    .result-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .result-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .score-badge {
+        font-size: 0.85rem;
+        padding: 6px 12px;
+    }
+
+    .info-row {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    .info-row img {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* Notes section */
+    .notes-list {
+        padding: 10px;
+    }
+
+    .note-item {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    /* AI Summary */
+    .ai-summary {
+        padding: 15px;
+        font-size: 0.95rem;
+    }
+
+    /* Brief summary */
+    .brief-item {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    /* Table responsive */
+    table {
+        font-size: 0.85rem;
+    }
+
+    table th,
+    table td {
+        padding: 8px 6px;
+    }
+
+    /* Range sliders */
+    .range-container {
+        gap: 10px;
+    }
+
+    .range-value {
+        font-size: 0.9rem;
+        min-width: 50px;
+    }
+
+    /* Recording indicator */
+    .recording-indicator {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+
+    /* Audio visualizer */
+    #audioVisualizer canvas {
+        height: 40px;
+    }
+}
+
+/* Very small phones (iPhone SE, etc.) */
+@media (max-width: 375px) {
+    h1 {
+        font-size: 1.3rem;
+    }
+
+    .subtitle {
+        font-size: 0.85rem;
+    }
+
+    .stats {
+        gap: 6px;
+    }
+
+    .stat-card {
+        padding: 10px 4px;
+    }
+
+    .stat-number {
+        font-size: 1.2rem;
+    }
+
+    .stat-label {
+        font-size: 0.55rem;
+        letter-spacing: 0.3px;
+    }
+
+    .search-box {
+        padding: 12px 8px;
+    }
+
+    input[type="text"] {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
+    button {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+
+    .result-card {
+        padding: 12px 8px;
+    }
+
+    .result-header h2 {
+        font-size: 1rem;
+    }
+}
+
+/* Landscape mode for phones */
+@media (max-width: 768px) and (orientation: landscape) {
+    header {
+        padding: 20px 15px;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+        flex-direction: row;
+    }
+
+    .stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 12px 8px;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.65rem;
+    }
+}
+
+/* Ensure horizontal scrolling is smooth */
+* {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent horizontal overflow */
+body {
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Make images responsive */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Touch-friendly tap targets */
+@media (hover: none) and (pointer: coarse) {
+    button,
+    .select-button,
+    .select-option,
+    a {
+        min-height: 44px;
+        min-width: 44px;
+    }
 }

@@ -205,8 +205,13 @@ class ResponseGenerator:
             
             # Build vendor summaries using field indices
             vendor_summaries = []
-            for vendor in limited_results:
+            for idx, vendor in enumerate(limited_results, 1):
                 summary = {}
+                
+                # CRITICAL: Include match score and rank first
+                score = vendor.get('similarity_score', 0)
+                summary['Rank'] = f"#{idx}"
+                summary['Match Score'] = f"{score:.1%}"
                 
                 for field_idx in summary_field_indices:
                     if field_idx not in FIELD_MAP:
@@ -280,8 +285,13 @@ class ResponseGenerator:
             
             # Prepare vendor summaries using field indices
             vendor_summaries = []
-            for vendor in results[:10]:  # Limit to top 10 for token efficiency
+            for idx, vendor in enumerate(results[:10], 1):  # Limit to top 10 for token efficiency
                 summary_dict = {}
+                
+                # CRITICAL: Include rank and match score first
+                score = vendor.get('similarity_score', 0)
+                summary_dict['Rank'] = f"#{idx}"
+                summary_dict['Match Score'] = f"{score:.1%}"
                 
                 # Build summary from configured fields
                 for field_idx in summary_field_indices:
